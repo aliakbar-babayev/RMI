@@ -20,8 +20,9 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="RM AI – Phase 1", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_origin_regex=settings.cors_origin_regex,
+    # Any website may call the API from a browser. Safe here: no cookies or credentials are used,
+    # and the API is reachable without a browser anyway.
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

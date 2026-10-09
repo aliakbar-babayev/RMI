@@ -162,18 +162,7 @@ def test_samples_run_end_to_end_with_fake_model(client):
     assert client.get("/audit/verify").json()["ok"]
 
 
-def test_cors_origin_regex(monkeypatch):
-    from fastapi.testclient import TestClient
-    from app import main as main_mod
-    from app.config import settings
-    import importlib
-
-    monkeypatch.setattr(settings, "cors_origin_regex", r"https://.*\.vercel\.app")
-    app = importlib.reload(main_mod).app
-    with TestClient(app) as c:
-        ok = c.get("/health", headers={"Origin": "https://rmi-abc.vercel.app"})
-        bad = c.get("/health", headers={"Origin": "https://evil.example.com"})
-    assert ok.headers.get("access-control-allow-origin") == "https://rmi-abc.vercel.app"
-    assert "access-control-allow-origin" not in bad.headers
-    monkeypatch.setattr(settings, "cors_origin_regex", None)
-    importlib.reload(main_mod)
+def test_cors_allows_any_origin(client):
+    r = client.options("/health", headers={"Origin": "https://rmi-abc.vercel.app", "Access-Control-Request-Method": "GET",
+                                           "Access-Control-Request-Headers": "content-type,x-role"})
+    assert r.status_code == 200 and r.headers["access-control-allow-origin"] == "*"

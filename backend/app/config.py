@@ -41,12 +41,6 @@ class Settings(BaseSettings):
     confidence_review_threshold: float = 0.7
 
     # Trusted dev origins. In prod behind Nginx this list is tightened.
-    cors_origins: list[str] = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-    ]
-    # Also allow origins matching this pattern, e.g. every Vercel deploy: https://.*\.vercel\.app
-    cors_origin_regex: str | None = None
 
 
 settings = Settings()
