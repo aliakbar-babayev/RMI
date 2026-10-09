@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* Design tokens from the Stitch design system (DESIGN.md) */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-canvas: #f8fafc;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-well: #f1f5f9;
+  --color-ink: #0f172a;
+  --color-ink-2: #475569;
+  --color-ink-3: #94a3b8;
+
+  --color-ok: #10b981;
+  --color-ok-soft: #ecfdf5;
+  --color-ok-ink: #047857;
+  --color-warn: #f59e0b;
+  --color-warn-soft: #fffbeb;
+  --color-warn-ink: #b45309;
+  --color-bad: #dc2626;
+  --color-bad-soft: #fef2f2;
+  --color-bad-ink: #b91c1c;
+  --color-ai: #6366f1;
+  --color-ai-soft: #eef2ff;
+  --color-ai-ink: #4338ca;
+  --color-ai-line: #c7d2fe;
+
+  /* Risk levels (validated for color-blind separation; numbers are always shown too) */
+  --color-lvl-low: #1f9d63;
+  --color-lvl-low-soft: #ecfdf5;
+  --color-lvl-medium: #d4b000;
+  --color-lvl-medium-soft: #fef9e1;
+  --color-lvl-high: #e65100;
+  --color-lvl-high-soft: #fff1e6;
+  --color-lvl-critical: #b3122f;
+  --color-lvl-critical-soft: #fdecee;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Highlighted evidence inside the source document */
+mark.evidence {
+  background: #a7f3d0;
+  color: var(--color-ink);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.shadow-card {
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+}
+.shadow-pop {
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+}

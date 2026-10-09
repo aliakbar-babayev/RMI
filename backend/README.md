@@ -65,6 +65,18 @@ tests/
 - `GET /dashboard/heatmap?mode=all|open&source=` always returns all 25 cells. Rejected risks are excluded.
 - `GET /dashboard/insights` returns `{insights: [{text, fact_ids}], facts, generated_by: "ai"|"template"|"none"}`. The backend computes the facts; the AI only rephrases them in Azerbaijani. If the AI text contains any number not in the facts, or the model is down, the fixed template sentences are returned. The reply is cached until the numbers change, so polling is cheap.
 
+## Modules beyond Phase 1 (from the functional spec)
+
+| Area | Endpoints |
+|---|---|
+| Readiness review (Module 1) | `POST /analyses` with `"readiness": true` → `readiness` = 12 dimensions (passed/warning/failed, finding, recommendation, verified quote). Score and Go / Conditional / Not ready are computed by the backend. |
+| System registry | `GET /systems`, `GET /systems/{id}/blast-radius`. Demo systems are loaded into an empty database (`app/seed.py`). |
+| Incidents (Module 2) | `POST /incidents`, `GET /incidents`, `GET /incidents/{id}` (blast radius, consequential risks, response plan with destructive-command flags, SLA metrics), `GET /incidents/{id}/timeline`, `POST /incidents/{id}/acknowledge|contain|recover|close`, `PATCH /incidents/{id}/severity`, `POST /incidents/{id}/materialize` (confirm a predicted risk happened), `GET /samples/incidents` |
+| Escalations (Module 6) | `POST /escalations`, `POST /escalations/break-glass`, `GET /escalations`, `POST /escalations/{id}/decision` (executive only, never the requester's role, can only narrow), `/revoke`, `/review`. Access expires on its own; red flags (broad access, longer than suggested, pressure language) come from fixed rules. |
+| Audit proofs | `GET /audit/stats`, `GET /audit/{id}/proof` (recomputed hash + link check), `/proof/download`, `GET /audit?category=&search=`; verify returns `duration_ms` |
+
+Existing databases get the new columns added on startup.
+
 ## Additions beyond the brief's API table
 - `POST /risks/{id}/resolve`: needed so the heat map can show solved risks.
 - `GET /health`: shows which model is configured.

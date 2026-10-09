@@ -22,7 +22,7 @@ def call_model(system_prompt: str, user_text: str, schema: type[BaseModel] = AIE
     `schema` is the shape the reply must follow (risk extraction by default).
     """
     if settings.ai_provider == "fake":
-        return fake_model.reply(user_text)
+        return fake_model.reply(user_text, schema.__name__)
 
     if not settings.ollama_model:
         raise ModelUnavailableError("OLLAMA_MODEL is not set in .env")

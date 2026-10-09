@@ -19,7 +19,8 @@ router = APIRouter(prefix="/analyses", tags=["analyses"])
 def _out(a: Analysis) -> AnalysisOut:
     return AnalysisOut(
         analysis_id=a.analysis_id, text=a.text, language_hint=a.language_hint, source=a.source,
-        model=a.model, stats=a.stats, created_at=a.created_at, risks=[to_out(r) for r in a.risks],
+        model=a.model, stats=a.stats, created_at=a.created_at, readiness=a.readiness,
+        incident_id=a.incident_id, risks=[to_out(r) for r in a.risks],
     )
 
 
