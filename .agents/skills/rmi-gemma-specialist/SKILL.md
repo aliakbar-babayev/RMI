@@ -85,6 +85,17 @@ PARAMETER stop "<end_of_turn>"
 PARAMETER stop "<<<DOCUMENT-"
 ```
 
+### D. Vertex AI Serving Registration & vLLM Parameters
+When registering fine-tuned merged weights (`gemma2-9b-rmi-merged`) to Vertex AI Model Registry:
+- **Serving Container Image:** `us-docker.pkg.dev/vertex-ai/vertex-vision-model-garden-dockers/pytorch-vllm-serve:latest`
+- **Mandatory Entrypoint:** Must pass `--container-command="python3,-m,vllm.entrypoints.api_server"`
+- **Serving Arguments:** `--container-args="--port=8080,--dtype=bfloat16,--gpu-memory-utilization=0.9"`
+- **Routes & Ports:** `--container-predict-route=/generate`, `--container-health-route=/health`, `--container-ports=8080`
+
+### E. Client Authentication Invariant (ADC vs API Key)
+- **Custom Endpoints (`aiplatform.Endpoint`):** Strictly require Google Application Default Credentials via Service Account JSON key (`GOOGLE_APPLICATION_CREDENTIALS`) with role `roles/aiplatform.user`. API keys (`GCP_API_KEY`) cannot authenticate custom endpoints.
+- **Express Mode (`gemini-2.5-flash`):** Uses static API key via `:generateContent`.
+
 ---
 
 ## 🧠 4. Internal RAG Architecture in RMI

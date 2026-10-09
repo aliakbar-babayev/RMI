@@ -86,62 +86,34 @@ def _call_vertex(system_prompt: str, user_text: str, schema: type[BaseModel] = A
             if response.predictions:
                 pred = response.predictions[0]
                 if isinstance(pred, dict):
-                    return pred.get("content") or json.dumps(pred)
-                return str(pred)
+                    if "content" in pred:
+                        raw_text = pred["content"]
+                    elif "generated_text" in pred:
+                        raw_text = pred["generated_text"]
+                    elif "text" in pred:
+                        t = pred["text"]
+                        raw_text = t[0] if isinstance(t, list) and t else str(t)
+                    else:
+                        raw_text = json.dumps(pred)
+                else:
+                    raw_text = str(pred)
+
+                if "Output:\n" in raw_text:
+                    raw_text = raw_text.split("Output:\n", 1)[1]
+                for tag in ("<start_of_turn>model\n", "<start_of_turn>model", "<start_of_turn>", "<end_of_turn>", "</start_of_turn>", "</end_of_turn>"):
+                    raw_text = raw_text.replace(tag, "")
+                return raw_text.strip()
             raise ModelUnavailableError("Vertex AI endpoint returned empty predictions")
         except Exception as exc:
+            if settings.gcp_api_key:
+                return _call_vertex_rest(system_prompt, user_text, schema)
             if isinstance(exc, ModelUnavailableError):
                 raise
             raise ModelUnavailableError(f"Vertex AI Endpoint call failed: {exc}") from exc
 
     # 2. REST API with GCP API Key (Express mode)
     if settings.gcp_api_key and settings.gcp_project_id:
-        loc = settings.gcp_location
-        url = (
-            f"https://{loc}-aiplatform.googleapis.com/v1/projects/{settings.gcp_project_id}"
-            f"/locations/{loc}/publishers/google/models/{_vertex_model()}:generateContent"
-        )
-        try:
-            resp = httpx.post(
-                url,
-                # Key in a header, not the URL, so it does not end up in proxy or access logs.
-                headers={"x-goog-api-key": settings.gcp_api_key},
-                json={
-                    "systemInstruction": {"parts": [{"text": system_prompt}]},
-                    "contents": [{"role": "user", "parts": [{"text": user_text}]}],
-                    # JSON mode; the reply is still validated against the Pydantic schema.
-                    "generationConfig": {
-                        "temperature": 0,
-                        "responseMimeType": "application/json",
-                        **(
-                            {"thinkingConfig": {"thinkingBudget": settings.vertex_thinking_budget}}
-                            if settings.vertex_thinking_budget is not None
-                            else {}
-                        ),
-                    },
-                },
-                timeout=settings.ai_timeout_seconds,
-            )
-        except httpx.HTTPError as exc:
-            raise ModelUnavailableError(f"Vertex AI could not be reached: {exc}") from exc
-
-        if resp.status_code in (401, 403):
-            raise ModelUnavailableError("Vertex AI rejected the API key")
-        if resp.status_code == 404:
-            raise ModelUnavailableError(f"Vertex model '{_vertex_model()}' is not available to this project")
-        if resp.status_code == 429:
-            raise ModelUnavailableError("Vertex AI rate limit or quota reached; try again shortly")
-        if resp.status_code >= 400:
-            raise ModelUnavailableError(f"Vertex AI error {resp.status_code}")
-        try:
-            candidate = resp.json()["candidates"][0]
-            parts = candidate.get("content", {}).get("parts", [])
-            text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
-        except (KeyError, IndexError, ValueError) as exc:
-            raise ModelUnavailableError("Vertex AI returned an unexpected response") from exc
-        if not text:
-            raise ModelUnavailableError(f"Vertex AI returned no text (finish reason: {candidate.get('finishReason')})")
-        return text
+        return _call_vertex_rest(system_prompt, user_text, schema)
 
     # 3. Fallback: Google GenAI SDK (Vertex AI mode)
     try:
@@ -177,6 +149,56 @@ def _call_vertex(system_prompt: str, user_text: str, schema: type[BaseModel] = A
         if "ResourceExhausted" in str(exc):
             raise ModelUnavailableError(f"Vertex AI call failed: {exc}") from exc
         raise ModelUnavailableError(f"GCP_API_KEY and GCP_PROJECT_ID must be set in .env (or Vertex AI call failed: {exc})") from exc
+
+
+def _call_vertex_rest(system_prompt: str, user_text: str, schema: type[BaseModel] = AIExtraction) -> str:
+    loc = settings.gcp_location
+    model = _vertex_model()
+    if not model.startswith("gemini-"):
+        model = "gemini-2.5-flash"
+    url = (
+        f"https://{loc}-aiplatform.googleapis.com/v1/projects/{settings.gcp_project_id}"
+        f"/locations/{loc}/publishers/google/models/{model}:generateContent"
+    )
+    try:
+        resp = httpx.post(
+            url,
+            headers={"x-goog-api-key": settings.gcp_api_key},
+            json={
+                "systemInstruction": {"parts": [{"text": system_prompt}]},
+                "contents": [{"role": "user", "parts": [{"text": user_text}]}],
+                "generationConfig": {
+                    "temperature": 0,
+                    "responseMimeType": "application/json",
+                    **(
+                        {"thinkingConfig": {"thinkingBudget": settings.vertex_thinking_budget}}
+                        if settings.vertex_thinking_budget is not None
+                        else {}
+                    ),
+                },
+            },
+            timeout=settings.ai_timeout_seconds,
+        )
+    except httpx.HTTPError as exc:
+        raise ModelUnavailableError(f"Vertex AI could not be reached: {exc}") from exc
+
+    if resp.status_code in (401, 403):
+        raise ModelUnavailableError("Vertex AI rejected the API key")
+    if resp.status_code == 404:
+        raise ModelUnavailableError(f"Vertex model '{model}' is not available to this project")
+    if resp.status_code == 429:
+        raise ModelUnavailableError("Vertex AI rate limit or quota reached; try again shortly")
+    if resp.status_code >= 400:
+        raise ModelUnavailableError(f"Vertex AI error {resp.status_code}")
+    try:
+        candidate = resp.json()["candidates"][0]
+        parts = candidate.get("content", {}).get("parts", [])
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
+    except (KeyError, IndexError, ValueError) as exc:
+        raise ModelUnavailableError("Vertex AI returned an unexpected response") from exc
+    if not text:
+        raise ModelUnavailableError(f"Vertex AI returned no text (finish reason: {candidate.get('finishReason')})")
+    return text
 
 
 def call_model(system_prompt: str, user_text: str, schema: type[BaseModel] = AIExtraction) -> str:
