@@ -1,5 +1,7 @@
 """Pre-loaded demo documents. The Azerbaijani and Russian texts should be checked by a native speaker."""
 
+from pathlib import Path
+
 SAMPLES = [
     {
         "id": "en-fintech-sprint4",
@@ -62,6 +64,26 @@ Several developers share the root password for prod-web-02 to deploy hotfixes.
 The cutover is planned for a single weekend with no parallel run.""",
     },
 ]
+
+# Demo project documents from the repository's data/ folder (P1_PayBridge.md, P1_PayBridge_AZ.md, ...).
+# Language comes from the file name suffix (_AZ, _RU; otherwise English).
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+
+
+def _project_samples() -> list[dict]:
+    out = []
+    for path in sorted(DATA_DIR.glob("*.md")) if DATA_DIR.is_dir() else []:
+        text = path.read_text(encoding="utf-8")
+        stem = path.stem
+        lang = stem.rsplit("_", 1)[-1].lower() if stem.upper().endswith(("_AZ", "_RU")) else "en"
+        title = text.splitlines()[0].lstrip("# ").strip() if text.strip() else stem
+        name = stem.split("_")[1] if "_" in stem else stem
+        out.append({"id": f"data-{stem.lower()}", "language": lang, "title": title, "source": name.lower(),
+                    "text": text, "project": True})
+    return out
+
+
+SAMPLES += _project_samples()
 
 # Example incident reports for the Incident Reporter page.
 INCIDENT_SAMPLES = [
