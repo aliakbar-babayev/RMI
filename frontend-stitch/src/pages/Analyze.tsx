@@ -59,6 +59,7 @@ export function Analyze() {
   const [openDim, setOpenDim] = useState<string | null>(null)
   const [accepting, setAccepting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
 
   // The shown analysis lives in the URL, so results survive navigation and can be linked.
   const [params, setParams] = useSearchParams()
@@ -143,11 +144,28 @@ export function Analyze() {
                 <option key={s.id} value={s.id}>{s.title} ({s.language.toUpperCase()})</option>
               ))}
             </select>
-            <Button className="h-9" onClick={() => fileRef.current?.click()} title="Load a .txt, .md or .json file">
-              <Upload size={14} /> File
-            </Button>
-            <input ref={fileRef} type="file" accept=".txt,.md,.json,text/plain,text/markdown,application/json" className="hidden" onChange={(e) => e.target.files?.[0] && loadFile(e.target.files[0])} />
           </div>
+
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) loadFile(f) }}
+            className={cx(
+              'flex w-full items-center gap-3 rounded-lg border-2 border-dashed px-4 py-4 text-left transition-colors',
+              dragging ? 'border-ai bg-ai-soft' : 'border-line-strong hover:border-ai hover:bg-ai-soft',
+            )}
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-ai-soft text-ai-ink">
+              <Upload size={20} />
+            </span>
+            <span>
+              <span className="block text-sm font-semibold text-ink">Upload a document</span>
+              <span className="block text-xs text-ink-2">Click or drop a .txt, .md or .json file here</span>
+            </span>
+          </button>
+          <input ref={fileRef} type="file" accept=".txt,.md,.json,text/plain,text/markdown,application/json" className="hidden" onChange={(e) => e.target.files?.[0] && loadFile(e.target.files[0])} />
 
           <div>
             <textarea

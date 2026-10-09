@@ -169,7 +169,6 @@ export function RiskInspector({ riskId, variant, onClose }: { riskId: string; va
               )}
               <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-ink-2">
                 <span>Doc: {risk.analysis_id}</span>
-                {risk.evidence.length > 0 && <span className="text-ok-ink">Match: exact (case/space-insensitive)</span>}
               </div>
               {risk.evidence.length > 0 && (
                 <button onClick={() => setShowDoc((s) => !s)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-ai-ink hover:underline">

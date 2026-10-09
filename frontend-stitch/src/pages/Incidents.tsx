@@ -31,7 +31,6 @@ function ReportForm({ onCreated }: { onCreated: (id: string) => void }) {
   const [picked, setPicked] = useState<string[]>([])
   const [environment, setEnvironment] = useState('')
   const [occurred, setOccurred] = useState('')
-  const [anonymous, setAnonymous] = useState(false)
   const [more, setMore] = useState(false)
   const { session } = useApp()
   const [name, setName] = useState(() => {
@@ -55,11 +54,11 @@ function ReportForm({ onCreated }: { onCreated: (id: string) => void }) {
       try { localStorage.setItem(NAME_KEY, name.trim()) } catch { /* storage unavailable */ }
       const inc = await api.reportIncident({
         report: report.trim(),
-        reporter_name: anonymous ? null : name.trim(),
+        reporter_name: name.trim(),
         systems: picked,
         environment: environment || null,
         occurred_at: occurred ? new Date(occurred).toISOString() : null,
-        anonymous,
+        anonymous: false,
       })
       setReport('')
       setPicked([])
@@ -74,7 +73,7 @@ function ReportForm({ onCreated }: { onCreated: (id: string) => void }) {
   }
 
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Siren size={16} className="text-bad" />Report a technical issue</span>} subtitle="Blameless: reporting fast matters more than who did it.">
+    <Card title={<span className="inline-flex items-center gap-2"><Siren size={16} className="text-bad" />Report a technical issue</span>}>
       <div className="mb-2 flex flex-wrap gap-1.5">
         {samples?.map((s) => (
           <button
@@ -123,19 +122,13 @@ function ReportForm({ onCreated }: { onCreated: (id: string) => void }) {
         </Field>
       </div>
       </>)}
-      {!anonymous && (
-        <div className="mt-3">
-          <Field label="Your name">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aysel Mammadova" className={inputCls} />
-          </Field>
-        </div>
-      )}
-      <label className="mt-3 inline-flex items-center gap-2 text-[13px]">
-        <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} className="h-4 w-4 accent-ink" />
-        Report anonymously (your name and role are not stored)
-      </label>
+      <div className="mt-3">
+        <Field label="Your name">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aysel Mammadova" className={inputCls} />
+        </Field>
+      </div>
       {error && <div className="mt-2"><ErrorBanner message={error} onClose={() => setError(null)} /></div>}
-      <Button variant="primary" className="mt-3 w-full" disabled={!report.trim() || (!anonymous && !name.trim())} loading={busy} onClick={submit}>
+      <Button variant="primary" className="mt-3 w-full" disabled={!report.trim() || !name.trim()} loading={busy} onClick={submit}>
         {busy ? `Assessing… ${seconds}s` : 'Submit & assess'}
       </Button>
     </Card>
@@ -266,10 +259,6 @@ function BlastGraph({ nodes, unmapped }: { nodes: BlastNode[]; unmapped: string[
           <AlertTriangle size={13} /> Not in the system registry: <Mono>{unmapped.join(', ')}</Mono>. Not guessed; add them to the registry.
         </p>
       )}
-      <div className="mt-2 flex flex-wrap gap-4 font-mono text-[11px] text-ink-2">
-        <span>Blast radius: {Math.max(0, nodes.length - nodes.filter((n) => n.hop === 0).length)} dependent system(s)</span>
-        <span>Edges from the registry’s depends_on lists</span>
-      </div>
     </>
   )
 }
@@ -645,7 +634,6 @@ function WorkerReports({ onSelect }: { onSelect: (id: string) => void }) {
                   </td>
                   <td className="max-w-[300px] border-b border-well px-3 py-3 text-[13px]">
                     <p className="font-medium">{r.title}</p>
-                    <p className="mt-0.5 line-clamp-2 text-xs text-ink-2">{r.problem}</p>
                   </td>
                   <td className="max-w-[260px] border-b border-well px-3 py-3 text-[13px]">
                     {r.solution ? <p className="line-clamp-3">{r.solution}</p> : <span className="text-xs text-warn-ink">Not solved yet</span>}
