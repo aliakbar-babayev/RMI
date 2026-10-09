@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, HardHat, Network, ShieldCheck, Sparkles, UserCog } from 'lucide-react'
+import { ArrowRight, BadgeCheck, HardHat, Network, Sparkles, UserCog } from 'lucide-react'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
@@ -83,7 +83,7 @@ export function Login() {
         <div aria-hidden className="pointer-events-none absolute inset-0 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:44px_44px]" />
 
         <div className="relative flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#fff] text-[#0f172a]"><ShieldCheck size={20} /></span>
+          <img src="/favicon.svg" alt="" width={36} height={36} className="h-9 w-9 rounded-md" />
           <span className="text-lg font-semibold tracking-tight text-[#fff]">RMAI</span>
         </div>
 
@@ -108,7 +108,7 @@ export function Login() {
       <main className="flex flex-col px-5 py-6 sm:px-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 lg:invisible">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-ink text-white"><ShieldCheck size={18} /></span>
+            <img src="/favicon.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-md" />
             <span className="text-base font-semibold">RMAI</span>
           </div>
           <ThemeSwitch />

@@ -9,7 +9,6 @@
     </linearGradient>
     <clipPath id="rmai-shield"><path d="M256 56 L420 116 V236 C420 338 352 414 256 454 C160 414 92 338 92 236 V116 Z"/></clipPath>
   </defs>
-  <rect width="512" height="512" rx="116" fill="url(#rmai-bg)"/>
   <path d="M256 56 L420 116 V236 C420 338 352 414 256 454 C160 414 92 338 92 236 V116 Z" fill="#ffffff" fill-opacity="0.06" stroke="#e2e8f0" stroke-width="14" stroke-linejoin="round"/>
   <g clip-path="url(#rmai-shield)">
     <rect x="159" y="176" width="58" height="58" rx="12" fill="#f59e0b"/>

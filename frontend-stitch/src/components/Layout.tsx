@@ -1,4 +1,4 @@
-import { BadgeCheck, LogOut, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { BadgeCheck, LogOut, ShieldAlert } from 'lucide-react'
 import { Navigate, NavLink, Outlet, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { usePoll, useApp } from '../lib/app'
@@ -18,10 +18,8 @@ const NAV = [
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-ink text-white">
-        <ShieldCheck size={18} />
-      </span>
+    <div className="flex shrink-0 items-center gap-2.5">
+      <img src="/favicon.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-md" />
       <div className="leading-tight">
         <p className="text-base font-semibold tracking-tight text-ink">RMAI</p>
       </div>
@@ -60,7 +58,7 @@ export function Layout() {
         <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-6">
             <Logo />
-            <nav className="hidden items-center gap-1 lg:flex">
+            <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto lg:flex">
               {NAV.map(({ to, label }) => (
                 <NavLink
                   key={to}
