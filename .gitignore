@@ -10,3 +10,8 @@ service-account*.json
 # Local data
 *.db
 *.db-journal
+*.db.bak-*
+
+# Test coverage data
+.coverage
+htmlcov/
