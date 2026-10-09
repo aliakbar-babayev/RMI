@@ -7,7 +7,7 @@ export interface Nav {
   refresh: () => void;
 }
 
-export type TabKey = 'overview' | 'risks' | 'register' | 'actions' | 'add';
+export type TabKey = 'overview' | 'projects' | 'risks' | 'register' | 'actions' | 'add';
 
 export const NavContext = createContext<Nav>({
   openRisk: () => {}, openSettings: () => {}, goTab: () => {}, refresh: () => {},

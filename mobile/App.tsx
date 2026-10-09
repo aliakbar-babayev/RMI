@@ -11,6 +11,7 @@ import { ActionsScreen } from './src/screens/ActionsScreen';
 import { AnalyzeScreen } from './src/screens/AnalyzeScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { OverviewScreen } from './src/screens/OverviewScreen';
+import { ProjectsScreen } from './src/screens/ProjectsScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { IconButton } from './src/ui';
@@ -34,6 +35,7 @@ function Shell() {
       <View style={[s.root, { paddingTop: insets.top }]}>
         <View style={s.content}>
           {tab === 'overview' && <OverviewScreen refreshKey={refreshKey} />}
+          {tab === 'projects' && <ProjectsScreen refreshKey={refreshKey} />}
           {tab === 'risks' && <DashboardScreen refreshKey={refreshKey} onOpen={setOpenId} onAdd={() => setTab('add')} />}
           {tab === 'register' && <RegisterScreen refreshKey={refreshKey} />}
           {tab === 'actions' && <ActionsScreen refreshKey={refreshKey} />}

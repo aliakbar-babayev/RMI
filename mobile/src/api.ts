@@ -48,7 +48,8 @@ export const api = {
   health: () => req<{ ok: boolean; model: string }>('/health'),
   samples: () => req<Sample[]>('/samples'),
   kpis: () => req<Kpis>('/dashboard/kpis'),
-  heatmap: (mode: 'all' | 'open' = 'all') => req<Heatmap>(`/dashboard/heatmap?mode=${mode}`),
+  heatmap: (mode: 'all' | 'open' = 'all', source?: string) =>
+    req<Heatmap>(`/dashboard/heatmap?mode=${mode}${source ? `&source=${encodeURIComponent(source)}` : ''}`),
   top: (limit = 5) => req<Risk[]>(`/dashboard/top?limit=${limit}`),
   insights: () => req<Insights>('/dashboard/insights'),
   risks: (query: Record<string, string> = {}) => {
@@ -57,8 +58,10 @@ export const api = {
   },
   risk: (id: string) => req<Risk>(`/risks/${encodeURIComponent(id)}`),
   analysis: (id: string) => req<Analysis>(`/analyses/${encodeURIComponent(id)}`),
-  analyze: (text: string, source?: string) =>
-    req<Analysis>('/analyses', { method: 'POST', body: JSON.stringify({ text, source: source || null }) }, 600000),
+  analyze: (text: string, source?: string, language?: string) =>
+    req<Analysis>('/analyses', {
+      method: 'POST', body: JSON.stringify({ text, source: source || null, language_hint: language || null }),
+    }, 600000),
   approve: (id: string, comment?: string) => post<Risk>(`/risks/${encodeURIComponent(id)}/approve`, { comment: comment || null }),
   reject: (id: string, reason: string) => post<Risk>(`/risks/${encodeURIComponent(id)}/reject`, { reason }),
   escalate: (id: string, to: 'ciso' | 'pmo', reason: string) =>

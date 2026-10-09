@@ -7,6 +7,7 @@ import { TabKey } from '../nav';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 export const TABS: { key: TabKey; label: string; icon: IconName; iconOn: IconName }[] = [
   { key: 'overview', label: 'Overview', icon: 'pie-chart-outline', iconOn: 'pie-chart' },
+  { key: 'projects', label: 'Projects', icon: 'folder-outline', iconOn: 'folder' },
   { key: 'risks', label: 'Risks', icon: 'grid-outline', iconOn: 'grid' },
   { key: 'register', label: 'Register', icon: 'list-outline', iconOn: 'list' },
   { key: 'actions', label: 'Actions', icon: 'checkmark-done-outline', iconOn: 'checkmark-done' },
@@ -41,8 +42,8 @@ export function TabBar({ tab, onChange, bottomInset }: { tab: TabKey; onChange: 
   }, [index, x]);
 
   const itemW = width / TABS.length;
-  const pillW = Math.max(0, itemW - 14);
-  const translateX = x.interpolate({ inputRange: [0, TABS.length - 1], outputRange: [7, 7 + itemW * (TABS.length - 1)] });
+  const pillW = Math.max(0, itemW - 8);
+  const translateX = x.interpolate({ inputRange: [0, TABS.length - 1], outputRange: [4, 4 + itemW * (TABS.length - 1)] });
 
   return (
     <View style={[s.bar, { paddingBottom: Math.max(bottomInset, 10) }]}>
@@ -68,5 +69,5 @@ const s = StyleSheet.create({
   row: { flexDirection: 'row' },
   indicator: { position: 'absolute', top: 0, bottom: 0, left: 0, borderRadius: 16, backgroundColor: 'rgba(244,123,32,0.13)' },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, gap: 3 },
-  label: { fontFamily: font.medium, fontSize: 11 },
+  label: { fontFamily: font.medium, fontSize: 10.5 },
 });
