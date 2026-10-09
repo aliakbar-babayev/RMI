@@ -1,0 +1,12 @@
+# Secrets: never commit real environment files or credentials, in any folder.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
+*-credentials.json
+
+# Local data
+*.db
+*.db-journal
