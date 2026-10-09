@@ -7,10 +7,10 @@ import { LEVEL, STATUS, levelFor } from '../lib/labels'
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
 export const LEVEL_SOLID: Record<Level, string> = {
-  low: 'bg-lvl-low text-white',
+  low: 'bg-lvl-low text-on-accent',
   medium: 'bg-lvl-medium text-ink', // yellow is too light for white text
-  high: 'bg-lvl-high text-white',
-  critical: 'bg-lvl-critical text-white',
+  high: 'bg-lvl-high text-on-accent',
+  critical: 'bg-lvl-critical text-on-accent',
 }
 export const LEVEL_SOFT: Record<Level, string> = {
   low: 'bg-lvl-low-soft text-ok-ink',
@@ -137,10 +137,10 @@ export function Button({
   loading?: boolean
 }) {
   const variants = {
-    primary: 'bg-ink text-white border-ink hover:bg-slate-800',
+    primary: 'bg-ink text-white border-ink hover:opacity-85',
     secondary: 'bg-white text-ink border-line hover:bg-canvas',
     ai: 'bg-ai-soft text-ai-ink border-ai-line hover:bg-indigo-100',
-    danger: 'bg-bad text-white border-bad hover:bg-red-700',
+    danger: 'bg-bad text-on-accent border-bad hover:opacity-90',
     'danger-soft': 'bg-white text-bad-ink border-red-200 hover:bg-bad-soft',
     ghost: 'bg-transparent text-ink-2 border-transparent hover:bg-well hover:text-ink',
   }
@@ -192,8 +192,8 @@ export function Card({ title, caption, subtitle, action, children, className, bo
   )
 }
 
-export function PageHeader({ caption, title, subtitle, actions, aside }: {
-  caption: string
+export function PageHeader({ title, subtitle, actions, aside }: {
+  caption?: string
   title: string
   subtitle?: string
   actions?: ReactNode
@@ -202,8 +202,7 @@ export function PageHeader({ caption, title, subtitle, actions, aside }: {
   return (
     <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
       <div className="min-w-0">
-        <Caption className="font-semibold text-ai-ink">{caption}</Caption>
-        <h1 className="mt-1 text-[28px] leading-9 font-semibold tracking-[-0.02em] text-ink">{title}</h1>
+        <h1 className="text-[28px] leading-9 font-semibold tracking-[-0.02em] text-ink">{title}</h1>
         {subtitle && <p className="mt-1 max-w-3xl text-sm leading-5 text-ink-2">{subtitle}</p>}
         {actions && <div className="mt-3 flex flex-wrap gap-2">{actions}</div>}
       </div>
@@ -258,7 +257,7 @@ export function Ring({ segments, size = 120, stroke = 12, children }: {
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" role="img" aria-label={segments.map((s) => `${s.label}: ${s.value}`).join(', ')}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" style={{ stroke: 'var(--color-well)' }} strokeWidth={stroke} />
         {total > 0 &&
           visible.map((s) => {
             const len = (s.value / total) * c
@@ -270,7 +269,7 @@ export function Ring({ segments, size = 120, stroke = 12, children }: {
                 cy={size / 2}
                 r={r}
                 fill="none"
-                stroke={s.color}
+                style={{ stroke: s.color }}
                 strokeWidth={stroke}
                 strokeDasharray={`${Math.max(0, len - gap)} ${c}`}
                 strokeDashoffset={-offset}
@@ -424,7 +423,7 @@ export function Modal({ title, onClose, children, footer, wide = false }: {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0f172a]/40 p-4" onMouseDown={onClose}>
       <div className={cx('shadow-pop w-full rounded-md border border-line-strong bg-white', wide ? 'max-w-xl' : 'max-w-md')} onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <h2 className="text-base font-semibold">{title}</h2>

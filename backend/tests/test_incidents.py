@@ -100,14 +100,56 @@ def test_predicted_risk_can_be_confirmed_as_materialized(client):
     assert "risk.materialized" in events and "incident.linked_risk" in events
 
 
-def test_auditor_cannot_report_and_anonymous_hides_role(client):
-    assert _report(client, report="x", systems=[]).status_code == 201
-    r = client.post("/incidents", json={"report": "x"}, headers={"X-Role": "auditor"})
-    assert r.status_code == 403
-    inc = _report(client, anonymous=True).json()
-    assert inc["reporter_role"] is None and inc["anonymous"] is True
-    reported = client.get(f"/incidents/{inc['incident_id']}/timeline").json()[0]
-    assert reported["actor"]["role"] is None
+WORKER = {"X-Role": "worker"}
+
+
+def test_worker_can_do_what_admin_does_except_escalation_decisions(client):
+    inc = client.post("/incidents", json={"report": NGINX["report"], "systems": NGINX["systems"], "reporter_name": "Aysel"},
+                      headers=WORKER).json()
+    iid = inc["incident_id"]
+    assert inc["reporter_role"] == "worker" and inc["reporter_name"] == "Aysel"
+    assert client.post(f"/incidents/{iid}/acknowledge", headers=WORKER).json()["status"] == "acknowledged"
+    assert client.post("/analyses", json={"text": "doc"}, headers=WORKER).status_code == 201
+    assert len(client.get("/incidents", headers=WORKER).json()) == 1
+    # Approving access stays with admins.
+    esc = client.post("/escalations", headers=WORKER, json={"incident_id": iid, "action_needed": "a", "resource": "r",
+                                                            "access_level": "l", "duration_minutes": 30, "justification": "j"}).json()
+    r = client.post(f"/escalations/{esc['escalation_id']}/decision", json={"result": "approve"}, headers=WORKER)
+    assert r.json()["error"] == "forbidden"
+
+
+def test_recover_needs_a_solution(client):
+    iid = _report(client).json()["incident_id"]
+    client.post(f"/incidents/{iid}/acknowledge")
+    assert client.post(f"/incidents/{iid}/recover").json()["error"] == "resolution_required"
+    body = client.post(f"/incidents/{iid}/recover", json={"note": "Restored nginx.conf from the config repo"}).json()
+    assert body["status"] == "recovered" and body["resolution"] == "Restored nginx.conf from the config repo"
+
+
+def test_worker_reports_for_admin(client):
+    w = client.post("/incidents", json={"report": NGINX["report"], "reporter_name": "Aysel Mammadova",
+                                        "occurred_at": "2026-10-09T10:30:00Z"}, headers=WORKER).json()
+    anon = client.post("/incidents", json={"report": NGINX["report"], "reporter_name": "hidden", "anonymous": True},
+                       headers=WORKER).json()
+    _report(client)  # reported by an admin: not a worker report
+    assert anon["reporter_name"] is None and anon["reporter_role"] is None
+
+    client.post(f"/incidents/{w['incident_id']}/acknowledge")
+    client.post(f"/incidents/{w['incident_id']}/recover", json={"note": "Config restored"})
+
+    assert client.get("/incidents/worker-reports", headers=WORKER).json()["error"] == "forbidden"
+    rows = {r["incident_id"]: r for r in client.get("/incidents/worker-reports").json()}
+    assert set(rows) == {w["incident_id"], anon["incident_id"]}
+    row = rows[w["incident_id"]]
+    assert row["worker_name"] == "Aysel Mammadova" and row["problem"] == NGINX["report"]
+    assert row["solution"] == "Config restored" and row["problem_time"] == "2026-10-09T10:30:00Z"
+    assert row["solved_at"] and row["time_to_solve_seconds"] is not None
+    assert rows[anon["incident_id"]]["worker_name"] is None and rows[anon["incident_id"]]["solved_at"] is None
+
+
+def test_legacy_role_names_still_work(client):
+    assert client.post("/analyses", json={"text": "doc"}, headers={"X-Role": "executive"}).status_code == 201
+    assert client.post("/analyses", json={"text": "doc"}, headers={"X-Role": "auditor"}).status_code == 201
 
 
 @pytest.mark.parametrize("report", ["   ", "x" * 20001])

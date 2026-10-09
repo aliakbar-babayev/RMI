@@ -152,6 +152,7 @@ def create_incident(db: Session, body: IncidentCreate, role: str) -> Incident:
         title=assessment.title[:300],
         report=body.report,
         reporter_role=None if body.anonymous else role,
+        reporter_name=None if body.anonymous else ((body.reporter_name or "").strip() or None),
         anonymous=body.anonymous,
         environment=environment,
         systems=systems,
@@ -261,6 +262,11 @@ def advance(db: Session, inc: Incident, action: str, role: str, note: str | None
     allowed, new_status, field = _LIFECYCLE[action]
     if inc.status not in allowed:
         raise AppError(409, "invalid_transition", f"Cannot {action} an incident with status '{inc.status}'.")
+    note = (note or "").strip() or None
+    if action == "recover" and not note:
+        raise AppError(422, "resolution_required", "Describe how the problem was solved.")
+    if action in ("recover", "close") and note and not (action == "close" and inc.resolution):
+        inc.resolution = note
     now = utc_now()
     setattr(inc, field, now)
     if action in ("contain", "recover") and not inc.acknowledged_at:

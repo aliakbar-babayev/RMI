@@ -97,7 +97,10 @@ class Incident(Base):
     title: Mapped[str] = mapped_column(String(300))
     report: Mapped[str] = mapped_column(Text)
     reporter_role: Mapped[str | None] = mapped_column(String(20))
+    reporter_name: Mapped[str | None] = mapped_column(String(100))
     anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
+    # How it was solved; written by the person who marks it recovered or closed.
+    resolution: Mapped[str | None] = mapped_column(Text)
     environment: Mapped[str | None] = mapped_column(String(20))
     systems: Mapped[list] = mapped_column(JSON, default=list)
     unmapped_systems: Mapped[list] = mapped_column(JSON, default=list)

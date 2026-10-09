@@ -98,9 +98,10 @@ def test_input_limits(client):
     assert r.status_code == 413 and r.json()["error"] == "input_too_long"
 
 
-def test_auditor_is_read_only(client):
-    r = _analyze(client, **{"X-Role": "auditor"})
-    assert r.status_code == 403 and r.json()["error"] == "forbidden"
+def test_roles(client):
+    # Legacy "auditor" now maps to worker, who can analyze too; unknown roles are refused.
+    assert _analyze(client, **{"X-Role": "auditor"}).status_code == 201
+    assert _analyze(client, **{"X-Role": "worker"}).status_code == 201
     assert _analyze(client, **{"X-Role": "boss"}).json()["error"] == "invalid_role"
 
 

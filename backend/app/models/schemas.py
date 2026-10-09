@@ -42,9 +42,8 @@ class Level(StrEnum):
 
 
 class Role(StrEnum):
-    executive = "executive"
-    analyst = "analyst"
-    auditor = "auditor"
+    admin = "admin"  # risk team: sees everything, makes every decision
+    worker = "worker"  # employee: reports incidents, requests access, follows their reports
 
 
 class EscalationTarget(StrEnum):
@@ -312,6 +311,7 @@ class IncidentStatus(StrEnum):
 
 class IncidentCreate(BaseModel):
     report: str
+    reporter_name: str | None = Field(default=None, max_length=100)
     environment: str | None = Field(default=None, max_length=20)
     systems: list[str] = Field(default_factory=list, max_length=20)
     occurred_at: str | None = None

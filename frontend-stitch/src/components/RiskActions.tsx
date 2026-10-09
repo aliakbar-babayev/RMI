@@ -18,7 +18,7 @@ export function RiskActions({ risk, layout = 'row' }: { risk: Risk; layout?: 'ro
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  if (!canAct) return <p className="text-xs text-ink-2">Read-only role: no decisions.</p>
+  if (!canAct) return <p className="text-xs text-ink-2">Only an admin can decide on risks.</p>
   const can = (a: keyof typeof ALLOWED) => ALLOWED[a].includes(risk.status)
   const size = layout === 'compact' ? 'sm' : 'md'
 

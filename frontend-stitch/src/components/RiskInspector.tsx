@@ -281,7 +281,7 @@ export function RiskInspector({ riskId, variant, onClose }: { riskId: string; va
     return <aside className="shadow-card flex max-h-[calc(100vh-140px)] flex-col rounded-md border border-line bg-white xl:sticky xl:top-[120px]">{body}</aside>
   }
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/20" onMouseDown={done}>
+    <div className="fixed inset-0 z-50 flex justify-end bg-[#0f172a]/30" onMouseDown={done}>
       <aside role="dialog" aria-label={`Risk ${riskId}`} className="flex h-full w-full max-w-[560px] flex-col bg-white shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
         {body}
       </aside>

@@ -4,7 +4,8 @@ from sqlalchemy import text
 
 from app.samples import INCIDENT_SAMPLES
 
-EXEC = {"X-Role": "executive"}
+EXEC = {"X-Role": "admin"}
+WORKER = {"X-Role": "worker"}
 
 
 def _incident(client, report=None):
@@ -15,7 +16,7 @@ def _incident(client, report=None):
 def _request(client, iid, **over):
     body = {"incident_id": iid, "action_needed": "Restore nginx.conf", "resource": "prod-web-02",
             "access_level": "sudo: config only", "duration_minutes": 120, "justification": "Deploy at 18:00", **over}
-    return client.post("/escalations", json=body)
+    return client.post("/escalations", json=body, headers=WORKER)
 
 
 def test_request_gets_ai_suggestion_and_flags(client):
@@ -29,10 +30,10 @@ def test_request_gets_ai_suggestion_and_flags(client):
     assert {f["type"] for f in risky["flags"]} == {"longer_than_suggested", "broad_access", "different_resource", "pressure_language"}
 
 
-def test_only_executive_decides_and_never_own_role(client):
+def test_only_admin_decides_and_never_own_role(client):
     iid = _incident(client)["incident_id"]
     esc = _request(client, iid).json()["escalation_id"]
-    assert client.post(f"/escalations/{esc}/decision", json={"result": "approve"}).json()["error"] == "forbidden"
+    assert client.post(f"/escalations/{esc}/decision", json={"result": "approve"}, headers=WORKER).json()["error"] == "forbidden"
     own = client.post("/escalations", headers=EXEC, json={"incident_id": iid, "action_needed": "a", "resource": "r",
                                                           "access_level": "l", "duration_minutes": 30, "justification": "j"}).json()
     r = client.post(f"/escalations/{own['escalation_id']}/decision", json={"result": "approve"}, headers=EXEC)
@@ -65,7 +66,7 @@ def test_access_expires_on_its_own(client, db):
     db.execute(text("UPDATE escalations SET expires_at = :t WHERE escalation_id = :e"), {"t": past, "e": esc})
     db.commit()
     assert client.get(f"/escalations/{esc}").json()["status"] == "expired"
-    assert client.post(f"/escalations/{esc}/revoke").json()["error"] == "invalid_transition"
+    assert client.post(f"/escalations/{esc}/revoke", headers=WORKER).json()["error"] == "invalid_transition"
     events = [e["event_type"] for e in client.get(f"/audit?entity_id={esc}").json()]
     assert events[0] == "access.expired"
 
@@ -73,15 +74,15 @@ def test_access_expires_on_its_own(client, db):
 def test_revoke_early(client):
     esc = _request(client, _incident(client)["incident_id"]).json()["escalation_id"]
     client.post(f"/escalations/{esc}/decision", json={"result": "approve"}, headers=EXEC)
-    assert client.post(f"/escalations/{esc}/revoke").json()["status"] == "revoked"
+    assert client.post(f"/escalations/{esc}/revoke", headers=WORKER).json()["status"] == "revoked"
 
 
 def test_break_glass_rules(client):
     inc = _incident(client)
-    bg = client.post("/escalations/break-glass", json={"incident_id": inc["incident_id"], "resource": "prod-web-02",
-                                                       "access_level": "sudo", "justification": "Deploy in 5 min"}).json()
+    bg = client.post("/escalations/break-glass", headers=WORKER, json={"incident_id": inc["incident_id"], "resource": "prod-web-02",
+                                                                       "access_level": "sudo", "justification": "Deploy in 5 min"}).json()
     assert bg["status"] == "approved" and bg["break_glass"] and bg["review_required"] and bg["duration_minutes"] == 60
-    assert client.post(f"/escalations/{bg['escalation_id']}/review", json={"justified": True}).json()["error"] == "forbidden"
+    assert client.post(f"/escalations/{bg['escalation_id']}/review", json={"justified": True}, headers=WORKER).json()["error"] == "forbidden"
     reviewed = client.post(f"/escalations/{bg['escalation_id']}/review", json={"justified": True}, headers=EXEC).json()
     assert reviewed["reviewed_at"] and reviewed["decision"]["review"]["justified"] is True
 

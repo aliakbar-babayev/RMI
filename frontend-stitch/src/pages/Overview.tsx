@@ -56,8 +56,9 @@ function exportRegister(risks: Risk[]) {
 }
 
 export function Overview() {
-  const { role } = useApp()
   const { open } = useOpenRisk()
+  const { dark } = useApp()
+  const grid = dark ? '#243047' : '#f1f5f9'
   const [mode, setMode] = useState<'all' | 'open'>('all')
   const [scope, setScope] = useState('')
   const [cell, setCell] = useState<HeatCell | null>(null)
@@ -122,8 +123,8 @@ export function Overview() {
     <>
       <PageHeader
         caption="Risk governance overview"
-        title="Executive Risk Register & Treatment Overview"
-        subtitle="Live totals from the risk register, incidents, escalations and the audit chain. AI proposes; people approve; every step is logged."
+        title="Overview"
+        subtitle="Risks, incidents and approvals at a glance."
         aside={
           <div className="flex flex-wrap items-center gap-2 xl:justify-end">
             {verify.data && (
@@ -197,10 +198,10 @@ export function Overview() {
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={treatment} barGap={2} barCategoryGap="28%">
-                      <CartesianGrid vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#475569' }} axisLine={false} tickLine={false} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={28} />
-                      <Tooltip content={<ChartTip />} cursor={{ fill: '#f8fafc' }} />
+                      <CartesianGrid vertical={false} stroke={grid} />
+                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: dark ? '#a3b1c6' : '#475569' }} axisLine={false} tickLine={false} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: dark ? '#66758c' : '#94a3b8' }} axisLine={false} tickLine={false} width={28} />
+                      <Tooltip content={<ChartTip />} cursor={{ fill: dark ? '#1a2337' : '#f8fafc' }} />
                       <Bar isAnimationActive={false} dataKey="Approved" fill={C_APPROVED} radius={[4, 4, 0, 0]} />
                       <Bar isAnimationActive={false} dataKey="In review" fill={C_REVIEW} radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -357,7 +358,7 @@ export function Overview() {
                   </div>
                   {t.tag}
                   <Link to={t.to}>
-                    <Button size="sm" variant={role === 'auditor' ? 'secondary' : 'primary'}>{role === 'auditor' ? 'Inspect' : t.action}</Button>
+                    <Button size="sm" variant="primary">{t.action}</Button>
                   </Link>
                 </li>
               ))}

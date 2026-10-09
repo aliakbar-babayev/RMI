@@ -5,6 +5,7 @@ import { Analyze } from './pages/Analyze'
 import { AuditTrail } from './pages/AuditTrail'
 import { Escalations } from './pages/Escalations'
 import { Incidents } from './pages/Incidents'
+import { Login } from './pages/Login'
 import { Overview } from './pages/Overview'
 import { Risks } from './pages/Risks'
 
@@ -13,6 +14,7 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="login" element={<Login />} />
           <Route element={<Layout />}>
             <Route index element={<Overview />} />
             <Route path="risks" element={<Risks />} />

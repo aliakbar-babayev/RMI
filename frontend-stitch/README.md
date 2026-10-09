@@ -21,7 +21,7 @@ In development, requests to `/api/*` go through Vite's proxy to `http://localhos
 
 | Route | Page |
 |---|---|
-| `/` | Overview & Analytics: KPI tiles, risks by treatment, review/incident status rings, 5×5 matrix, source exposure, fact-grounded AI insights, urgent tasks |
+| `/` | Overview & Analytics: KPI tiles, risks by treatment, review/incident status rings, 5×5 thermal risk map (cold blue → hot red), source exposure, fact-grounded AI insights, urgent tasks |
 | `/risks` | Risk Register: filters + active-filter chips, scenario table, pagination, side inspector (CSV/JSON export) |
 | `/analyze` | Project Analyzer: presets (incl. injection probe), payload box with SHA-256, 12-dimension readiness gauge, verbatim offset inspector, Accept/Triage (`?analysis=AN-001` keeps the result) |
 | `/incidents` | Incident Reporter & Blast Radius: report form, severity, SLA metrics, "predicted risk happened" link, dependency graph, response horizons, least-privilege escalation, break-glass, activity trail (`?incident=INC-001`) |
@@ -30,7 +30,8 @@ In development, requests to `/api/*` go through Vite's proxy to `http://localhos
 | `?risk=R-001` | Opens the risk inspector on any page |
 
 ## Notes
-- **Role switcher** (header) sends `X-Role`. Auditor is read-only; only Executive decides escalations. It is not access control.
+- **Roles** (switcher in the header, sent as `X-Role`): **Admin** sees every page and makes all decisions; **Worker** only sees *Incidents & Blast Radius*: report incidents, follow reports made by workers, request access / break-glass. This is a demo switch, not real login.
+- **Show it on another laptop** (same network): `npx vite --host 0.0.0.0`, then open `http://<your-ip>:5173`. The backend stays on `127.0.0.1`; the browser reaches it through Vite's `/api` proxy, so API keys never leave your machine.
 - **Polling**: data refreshes every 4 s and right after any change.
 - **Colors**: level colors (green / yellow / orange / red) and chart colors were checked with a color-blindness palette validator. Numbers are always printed on cells and badges, so color is never the only signal.
 - **Labels** for all backend values are in `src/lib/labels.ts`, the place to translate the UI.

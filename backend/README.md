@@ -31,7 +31,7 @@ app/
   main.py            app, CORS, /samples, /health
   config.py          settings from .env
   db.py              SQLite engine, append-only triggers on audit_events
-  deps.py            X-Role header (executive | analyst | auditor)
+  deps.py            X-Role header (admin | worker)
   errors.py          all errors as {"error", "message"}
   samples.py         demo documents (EN / AZ / RU)
   ai/client.py       call_model() – the only code that knows the model
@@ -57,7 +57,7 @@ tests/
 | No secrets in git | `.env`, `*.db` in `.gitignore` |
 
 ## API notes for the frontend
-- Send `X-Role: executive | analyst | auditor` on every request (default `analyst`). Auditors get `403` on changes.
+- Send `X-Role: admin | worker` on every request (missing = `worker`). Admin-only: analyses, risk decisions, incident lifecycle/severity/materialize, escalation decisions and break-glass review. Workers report incidents, request escalations/break-glass, and only see incidents reported by workers. The old names still work: `executive`/`analyst` → admin, `auditor` → worker.
 - `POST /analyses` is synchronous and can take minutes with a local model. Show a progress state.
 - Status changes: `approve`, `reject` (`{reason}`), `escalate` (`{to: "ciso"|"pmo", reason}`), `resolve`. `rejected` and `resolved` are final; other invalid moves return `409 invalid_transition`.
 - `PATCH /risks/{id}` accepts `probability, impact, statement, owner_role, category, strategy, trigger, actions, source, comment`. Score and level are recomputed.

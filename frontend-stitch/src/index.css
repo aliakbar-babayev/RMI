@@ -27,6 +27,10 @@
   --color-ai-ink: #4338ca;
   --color-ai-line: #c7d2fe;
 
+  /* Same in both themes: text on colored fills, and the dark code/telemetry boxes */
+  --color-on-accent: #ffffff;
+  --color-code: #0f172a;
+
   /* Risk levels (validated for color-blind separation; numbers are always shown too) */
   --color-lvl-low: #1f9d63;
   --color-lvl-low-soft: #ecfdf5;
@@ -44,6 +48,45 @@ body,
   min-height: 100%;
 }
 
+/* Dark theme: the same tokens with dark values. "white" is the card surface, so every
+   bg-white card turns dark and every ink-on-white button inverts on its own. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-white: #121a2b;
+  --color-canvas: #0a0f1c;
+  --color-line: #243047;
+  --color-line-strong: #334360;
+  --color-well: #1a2337;
+  --color-ink: #e6ebf3;
+  --color-ink-2: #a3b1c6;
+  --color-ink-3: #66758c;
+  --color-ok-soft: #0b2a20;
+  --color-ok-ink: #6ee7b7;
+  --color-warn-soft: #2a2008;
+  --color-warn-ink: #fcd34d;
+  --color-bad-soft: #2c1216;
+  --color-bad-ink: #fca5a5;
+  --color-ai-soft: #1c1b45;
+  --color-ai-ink: #a5b4fc;
+  --color-ai-line: #3b3f8f;
+  --color-lvl-low-soft: #0b2a20;
+  --color-lvl-medium-soft: #29240b;
+  --color-lvl-high-soft: #2d1a0d;
+  --color-lvl-critical-soft: #2c1216;
+  --color-code: #050a14;
+  /* Tailwind tints used by status chips */
+  --color-sky-50: #0b2232;
+  --color-sky-200: #0c4a6e;
+  --color-sky-700: #7dd3fc;
+  --color-emerald-100: #064e3b;
+  --color-emerald-200: #065f46;
+  --color-emerald-300: #047857;
+  --color-amber-200: #78350f;
+  --color-red-200: #7f1d1d;
+  --color-red-300: #991b1b;
+  --color-indigo-100: #312e81;
+}
+
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
@@ -55,9 +98,13 @@ body {
 /* Highlighted evidence inside the source document */
 mark.evidence {
   background: #a7f3d0;
-  color: var(--color-ink);
+  color: #0f172a;
   border-radius: 2px;
   padding: 0 1px;
+}
+:root[data-theme="dark"] mark.evidence {
+  background: #065f46;
+  color: #ecfdf5;
 }
 
 .shadow-card {
@@ -65,4 +112,28 @@ mark.evidence {
 }
 .shadow-pop {
   box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Heat map: slow pulse on hot spots ("red wave"); off for people who prefer less motion */
+@keyframes heat-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+.heat-pulse {
+  animation: heat-pulse 3.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .heat-pulse { animation: none; }
+}
+
+/* Login brand panel: slow drifting waves */
+@keyframes login-waves {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-3%, 2%, 0) scale(1.06); }
+}
+.login-waves {
+  animation: login-waves 14s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-waves { animation: none; }
 }

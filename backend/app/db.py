@@ -42,12 +42,15 @@ _APPEND_ONLY_TRIGGERS = [
 _ADDED_COLUMNS = {
     "analyses": {"readiness": "JSON", "incident_id": "VARCHAR(20)"},
     "risks": {"materialized_by": "VARCHAR(20)"},
+    "incidents": {"reporter_name": "VARCHAR(100)", "resolution": "TEXT"},
 }
 
 
 def _add_missing_columns(conn) -> None:
     for table, columns in _ADDED_COLUMNS.items():
         existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
+        if not existing:
+            continue  # table does not exist yet; create_all() makes it with every column
         for name, sql_type in columns.items():
             if name not in existing:
                 conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {sql_type}"))

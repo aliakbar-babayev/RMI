@@ -39,9 +39,8 @@ export const CLASSIFICATION: Record<Classification, string> = {
 }
 
 export const ROLE: Record<Role, string> = {
-  executive: 'Executive',
-  analyst: 'Analyst',
-  auditor: 'Auditor',
+  admin: 'Admin',
+  worker: 'Worker',
 }
 
 export const PROBABILITY = ['Very unlikely', 'Unlikely', 'Somewhat likely', 'Likely', 'Very likely']

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.ai.client import ModelUnavailableError
 from app.config import settings
 from app.db import get_db
-from app.deps import can_act
+from app.deps import can_act, require_admin
 from app.errors import AppError
 from app.models.schemas import IncidentCreate, Role, SeverityChange
 from app.models.tables import Incident
@@ -42,7 +42,9 @@ def _detail(db: Session, inc: Incident) -> dict:
         **_summary(inc),
         "report": inc.report,
         "reporter_role": inc.reporter_role,
+        "reporter_name": inc.reporter_name,
         "anonymous": inc.anonymous,
+        "resolution": inc.resolution,
         "unmapped_systems": inc.unmapped_systems,
         "severity_reason": inc.severity_reason,
         "summary": inc.summary,
@@ -87,6 +89,30 @@ def list_incidents(status: str | None = None, severity: str | None = None, db: S
     if severity:
         q = q.where(Incident.severity == severity.upper())
     return [_summary(i) for i in db.scalars(q.order_by(Incident.id.desc()))]
+
+
+@router.get("/worker-reports")
+def worker_reports(db: Session = Depends(get_db), role: Role = Depends(require_admin)):
+    """Admin view: every problem reported by a worker, with its solution and timings."""
+    q = select(Incident).where((Incident.reporter_role == Role.worker) | Incident.anonymous.is_(True))
+    out = []
+    for inc in db.scalars(q.order_by(Incident.id.desc())):
+        solved_at = inc.recovered_at or inc.closed_at
+        out.append({
+            "incident_id": inc.incident_id,
+            "worker_name": None if inc.anonymous else inc.reporter_name,
+            "anonymous": inc.anonymous,
+            "title": inc.title,
+            "problem": inc.report,
+            "solution": inc.resolution,
+            "problem_time": inc.occurred_at or inc.reported_at,
+            "reported_at": inc.reported_at,
+            "solved_at": solved_at,
+            "time_to_solve_seconds": svc.metrics(inc)["time_to_recover_seconds"] if inc.recovered_at else None,
+            "severity": inc.severity,
+            "status": inc.status,
+        })
+    return out
 
 
 @router.get("/{incident_id}")

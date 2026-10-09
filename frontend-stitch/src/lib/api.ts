@@ -5,7 +5,7 @@ export type Category = 'financial' | 'operational' | 'it' | 'infosec' | 'reputat
 export type Strategy = 'avoid' | 'mitigate' | 'transfer' | 'accept'
 export type Status = 'pending' | 'approved' | 'edited' | 'rejected' | 'escalated' | 'resolved'
 export type Level = 'low' | 'medium' | 'high' | 'critical'
-export type Role = 'executive' | 'analyst' | 'auditor'
+export type Role = 'admin' | 'worker'
 
 export interface Evidence {
   type: string
@@ -196,7 +196,9 @@ export interface EscalationSuggestion {
 export interface Incident extends IncidentSummary {
   report: string
   reporter_role: string | null
+  reporter_name: string | null
   anonymous: boolean
+  resolution: string | null
   unmapped_systems: string[]
   severity_reason: string
   summary: string
@@ -213,6 +215,21 @@ export interface Incident extends IncidentSummary {
   blast_radius: BlastNode[]
   consequential_risks: Risk[]
   materialize_candidates: Risk[]
+}
+
+export interface WorkerReport {
+  incident_id: string
+  worker_name: string | null
+  anonymous: boolean
+  title: string
+  problem: string
+  solution: string | null
+  problem_time: string
+  reported_at: string
+  solved_at: string | null
+  time_to_solve_seconds: number | null
+  severity: Severity
+  status: IncidentStatus
 }
 
 export interface IncidentSample {
@@ -316,7 +333,7 @@ export class ApiError extends Error {
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
-let currentRole: Role = 'analyst'
+let currentRole: Role = 'worker'
 export function setApiRole(role: Role) {
   currentRole = role
 }
@@ -382,7 +399,8 @@ export const api = {
   incidents: (status?: string) => request<IncidentSummary[]>(`/incidents${query({ status })}`),
   incident: (id: string) => request<Incident>(`/incidents/${id}`),
   incidentTimeline: (id: string) => request<AuditEntry[]>(`/incidents/${id}/timeline`),
-  reportIncident: (body: { report: string; environment?: string | null; systems: string[]; occurred_at?: string | null; anonymous: boolean }) =>
+  workerReports: () => request<WorkerReport[]>('/incidents/worker-reports'),
+  reportIncident: (body: { report: string; reporter_name?: string | null; environment?: string | null; systems: string[]; occurred_at?: string | null; anonymous: boolean }) =>
     post<Incident>('/incidents', body),
   advanceIncident: (id: string, action: 'acknowledge' | 'contain' | 'recover' | 'close', note?: string) =>
     post<Incident>(`/incidents/${id}/${action}`, { note: note || null }),

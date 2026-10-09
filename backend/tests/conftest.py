@@ -29,5 +29,5 @@ def db():
 
 @pytest.fixture
 def client():
-    with TestClient(app) as c:
+    with TestClient(app, headers={"X-Role": "admin"}) as c:
         yield c

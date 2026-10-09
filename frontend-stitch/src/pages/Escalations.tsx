@@ -121,8 +121,8 @@ function EscalationCard({ esc }: { esc: Escalation }) {
               <Button size="sm" variant="danger-soft" onClick={() => setModal('reject')}>Reject</Button>
             </>
           )}
-          {esc.status === 'pending' && !isApprover && <span className="text-xs text-ink-2">Waiting for an executive decision.</span>}
-          {esc.status === 'approved' && role !== 'auditor' && (
+          {esc.status === 'pending' && !isApprover && <span className="text-xs text-ink-2">Waiting for an admin decision.</span>}
+          {esc.status === 'approved' && (role === 'admin' || role === esc.requested_by_role) && (
             <Button size="sm" variant="danger-soft" loading={busy === 'rv'} onClick={() => run('rv', () => api.revokeEscalation(esc.escalation_id))}>Revoke now</Button>
           )}
           {esc.break_glass && !esc.reviewed_at && isApprover && (
@@ -155,16 +155,16 @@ export function Escalations() {
     <>
       <PageHeader
         caption="Module 06 · escalation & access governance"
-        title="Escalations & Time-Boxed Access"
-        subtitle="When fixing something needs more privilege or authority, an executive decides. Access always expires; break-glass is granted at once but must be reviewed."
+        title="Escalations"
+        subtitle="Access requests waiting for an admin. Granted access always expires."
       />
-      {role !== 'executive' && (
+      {role !== 'admin' && (
         <div className="mb-4 rounded-md border border-ai-line bg-ai-soft px-3 py-2 text-xs text-ai-ink">
-          You are viewing as {ROLE[role]}. Only the Executive role can approve, reject or review. Switch role in the header to decide.
+          You are viewing as {ROLE[role]}. Only an admin can approve, reject or review. Switch role in the header to decide.
         </div>
       )}
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile label="Awaiting decision" value={groups.pending.length} chip={groups.pending.some((e) => e.overdue) ? <Chip tone="bad">overdue</Chip> : undefined} note="Executive approval needed" />
+        <StatTile label="Awaiting decision" value={groups.pending.length} chip={groups.pending.some((e) => e.overdue) ? <Chip tone="bad">overdue</Chip> : undefined} note="Admin approval needed" />
         <StatTile label="Active access grants" value={groups.active.length} note="Expire automatically" />
         <StatTile label="Break-glass to review" value={groups.review.length} chip={groups.review.length ? <Chip tone="bad">review</Chip> : undefined} note="Mandatory after emergency use" />
         <StatTile label="Total requests" value={all.length} note="All decisions are in the audit chain" />
@@ -195,7 +195,7 @@ export function Escalations() {
           ))}
         </ul>
       </div>
-      <Caption className="mt-6">Rules: approver = executive · never the requester’s own role · approval can only narrow scope · access expires on its own</Caption>
+      <Caption className="mt-6">Rules: approver = admin · never the requester’s own role · approval can only narrow scope · access expires on its own</Caption>
     </>
   )
 }

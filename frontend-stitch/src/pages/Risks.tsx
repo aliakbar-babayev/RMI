@@ -100,7 +100,7 @@ export function Risks() {
       <PageHeader
         caption="Module 01 · risk register"
         title="Risk Register"
-        subtitle="ISO 31000 risk inventory: backend P × I scoring, every AI statement backed by a quote found word for word in its source."
+        subtitle="All risks, scored P × I, each backed by a quote from its source."
         aside={
           <div className="flex flex-wrap items-center gap-2 xl:justify-end">
             <Chip>{data?.length ?? 0} scenarios</Chip>

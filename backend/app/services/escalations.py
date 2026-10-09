@@ -1,6 +1,6 @@
 """Module 6: escalation to someone with more privilege or authority.
 
-Rules: the AI only suggests; an executive approves (never the requester's own role);
+Rules: the AI only suggests; an admin approves (never the requester's own role);
 access is always time-boxed and expires on its own; break-glass grants at once but
 is logged loudly and must be reviewed afterwards. No access is granted in a real
 system here: grants are records an IAM/PAM integration would act on.
@@ -18,7 +18,7 @@ from app.models.tables import Escalation
 from app.services.audit_log import record_event, utc_now
 from app.services.incidents import get_incident
 
-APPROVER_ROLE = Role.executive
+APPROVER_ROLE = Role.admin
 BREAK_GLASS_MINUTES = 60
 # Minutes an approver has to decide, by incident severity (no incident: 240).
 DECISION_MINUTES = {"SEV1": 15, "SEV2": 30, "SEV3": 240, "SEV4": 1440}
@@ -130,7 +130,7 @@ def create(db: Session, body: EscalationCreate, role: str) -> Escalation:
 
 def decide(db: Session, esc: Escalation, body: EscalationDecision, role: str) -> Escalation:
     if role != APPROVER_ROLE:
-        raise AppError(403, "forbidden", "Only an executive can approve or reject escalations.")
+        raise AppError(403, "forbidden", "Only an admin can approve or reject escalations.")
     if esc.requested_by_role == role:
         raise AppError(403, "separation_of_duties", "A request cannot be decided by the same role that made it.")
     if esc.status != "pending":
@@ -195,7 +195,7 @@ def revoke(db: Session, esc: Escalation, role: str) -> Escalation:
     if esc.status != "approved":
         raise AppError(409, "invalid_transition", f"Only active access can be revoked (status: {esc.status}).")
     if role not in (APPROVER_ROLE, esc.requested_by_role):
-        raise AppError(403, "forbidden", "Only the requester or an executive can revoke.")
+        raise AppError(403, "forbidden", "Only the requester or an admin can revoke.")
     esc.status = "revoked"
     esc.revoked_at = utc_now()
     record_event(db, entity_type="escalation", entity_id=esc.escalation_id, event_type="access.revoked",
@@ -206,7 +206,7 @@ def revoke(db: Session, esc: Escalation, role: str) -> Escalation:
 
 def review(db: Session, esc: Escalation, role: str, justified: bool, comment: str | None) -> Escalation:
     if role != APPROVER_ROLE:
-        raise AppError(403, "forbidden", "Only an executive can review break-glass use.")
+        raise AppError(403, "forbidden", "Only an admin can review break-glass use.")
     if not esc.break_glass or esc.reviewed_at:
         raise AppError(409, "invalid_transition", "Nothing to review.")
     esc.reviewed_at = utc_now()
