@@ -6,14 +6,41 @@ or removing any past entry breaks the chain from that point on.
 
 import hashlib
 import json
+import threading
 from datetime import UTC, datetime
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import event, select
+from sqlalchemy.orm import Session, SessionTransaction
 
 from app.models.tables import AuditEvent
 
 GENESIS_HASH = "0" * 64
+
+# Reading the last hash and committing the new entry must not interleave between requests,
+# or two entries get the same prev_hash and the chain forks. A session takes this lock at its
+# first write (flush or audit entry, whichever comes first, so always before SQLite's own
+# write lock) and holds it until its transaction ends (commit, rollback or close).
+# This covers one server process; the UNIQUE index on prev_hash catches anything else.
+_chain_lock = threading.Lock()
+_HOLDS_LOCK = "holds_audit_chain_lock"
+
+
+def _acquire_chain_lock(db: Session) -> None:
+    if not db.info.get(_HOLDS_LOCK):
+        _chain_lock.acquire()
+        db.info[_HOLDS_LOCK] = True
+
+
+@event.listens_for(Session, "before_flush")
+def _lock_before_write(db: Session, *_) -> None:
+    if db.new or db.dirty or db.deleted:
+        _acquire_chain_lock(db)
+
+
+@event.listens_for(Session, "after_transaction_end")
+def _release_chain_lock(db: Session, transaction: SessionTransaction) -> None:
+    if transaction.parent is None and db.info.pop(_HOLDS_LOCK, False):
+        _chain_lock.release()
 
 
 def utc_now() -> str:
@@ -60,6 +87,7 @@ def record_event(
     data: dict | None = None,
 ) -> AuditEvent:
     """Add an audit entry to the session. The caller commits it with the change it records."""
+    _acquire_chain_lock(db)
     last = db.scalar(select(AuditEvent).order_by(AuditEvent.event_id.desc()).limit(1))
     prev_hash = last.hash if last else GENESIS_HASH
     data = data or {}

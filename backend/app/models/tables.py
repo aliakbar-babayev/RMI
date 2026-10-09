@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -62,3 +62,6 @@ class AuditEvent(Base):
     recorded_at: Mapped[str] = mapped_column(String(32))
     prev_hash: Mapped[str] = mapped_column(String(64))
     hash: Mapped[str] = mapped_column(String(64))
+
+    # Unique: two entries pointing at the same predecessor would mean a forked chain.
+    __table_args__ = (Index("ix_audit_events_prev_hash", "prev_hash", unique=True),)

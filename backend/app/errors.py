@@ -1,7 +1,13 @@
+import logging
+import traceback
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+
+logger = logging.getLogger("rm_ai")
 
 
 class AppError(Exception):
@@ -30,6 +36,14 @@ def install_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=422, content=_body("validation_error", "Invalid request.", details=details)
         )
+
+    @app.exception_handler(Exception)
+    async def _unexpected(request: Request, exc: Exception):
+        # Log where it failed but not the exception message: messages (e.g. from validation)
+        # can contain document text. The client gets no details at all.
+        frames = "".join(traceback.format_tb(exc.__traceback__))
+        logger.error("Unhandled %s on %s %s\n%s", type(exc).__name__, request.method, request.url.path, frames)
+        return JSONResponse(status_code=500, content=_body("internal_error", "Something went wrong."))
 
     @app.exception_handler(StarletteHTTPException)
     async def _http(_: Request, exc: StarletteHTTPException):

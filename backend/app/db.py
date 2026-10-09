@@ -32,6 +32,8 @@ _APPEND_ONLY_TRIGGERS = [
        BEGIN SELECT RAISE(ABORT, 'audit_events is append-only'); END""",
     """CREATE TRIGGER IF NOT EXISTS audit_no_delete BEFORE DELETE ON audit_events
        BEGIN SELECT RAISE(ABORT, 'audit_events is append-only'); END""",
+    # create_all() does not add indexes to tables that already exist (databases made before it).
+    "CREATE UNIQUE INDEX IF NOT EXISTS ix_audit_events_prev_hash ON audit_events (prev_hash)",
 ]
 
 

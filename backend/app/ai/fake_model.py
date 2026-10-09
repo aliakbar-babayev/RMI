@@ -7,7 +7,7 @@ risks and quotes them verbatim, so the rest of the pipeline is exercised for rea
 import json
 import re
 
-_DOC = re.compile(r"<<<DOCUMENT\n(.*)\nDOCUMENT>>>", re.S)
+_DOC = re.compile(r"<<<DOCUMENT-(\w+)\n(?P<data>.*)\nDOCUMENT-\1>>>", re.S)
 _SENTENCE = re.compile(r"[^.!?\n]+[.!?]?")
 _HOST = re.compile(r"\b[a-z][a-z0-9]*(?:-[a-z0-9]+)+\b")
 
@@ -22,18 +22,18 @@ _RULES = [
 ]
 
 
-_FACTS = re.compile(r"<<<FACTS\n(.*)\nFACTS>>>", re.S)
+_FACTS = re.compile(r"<<<FACTS-(\w+)\n(?P<data>.*)\nFACTS-\1>>>", re.S)
 
 
 def reply(user_text: str) -> str:
     facts = _FACTS.search(user_text)
     if facts:
         return json.dumps(
-            {"insights": [{"text": f["text"], "fact_ids": [f["id"]]} for f in json.loads(facts.group(1))]},
+            {"insights": [{"text": f["text"], "fact_ids": [f["id"]]} for f in json.loads(facts.group("data"))]},
             ensure_ascii=False,
         )
     m = _DOC.search(user_text)
-    doc = m.group(1) if m else user_text
+    doc = m.group("data") if m else user_text
     risks = []
     for sentence in (s.strip() for s in _SENTENCE.findall(doc)):
         lowered = sentence.lower()

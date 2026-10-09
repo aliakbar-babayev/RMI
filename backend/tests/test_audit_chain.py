@@ -34,6 +34,18 @@ def test_update_and_delete_blocked_by_database(db):
     db.rollback()
 
 
+def test_database_rejects_forked_entry(db):
+    _add(db, 2)
+    first_prev = db.execute(text("SELECT prev_hash FROM audit_events WHERE event_id = 1")).scalar()
+    with pytest.raises(DatabaseError):
+        db.execute(
+            text("INSERT INTO audit_events (entity_type, entity_id, event_type, actor_type, data, "
+                 "recorded_at, prev_hash, hash) VALUES ('risk','R-9','x','system','{}','t',:p,'h')"),
+            {"p": first_prev},
+        )
+    db.rollback()
+
+
 def _tamper(db, sql):
     # Simulates an attacker with direct DB access who first removes the protection triggers.
     db.execute(text("DROP TRIGGER audit_no_update"))

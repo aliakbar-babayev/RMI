@@ -15,10 +15,10 @@ API docs: http://localhost:8000/docs
 
 ### Local model (Ollama)
 ```bash
-ollama pull qwen2.5:7b        # ~5 GB; any model works, set OLLAMA_MODEL
+# set OLLAMA_URL, OLLAMA_MODEL (exact tag from `ollama list`) and OLLAMA_API_KEY in .env
 uv run python -m scripts.model_check --runs 3
 ```
-`model_check` runs the EN / AZ / RU samples and reports valid JSON, quote verification, Azerbaijani output and score consistency, which is the 30-minute model test from the brief. On a CPU-only laptop expect 1–3 minutes per analysis.
+`model_check` runs the EN / AZ / RU samples, plus the team test set in `../tests/documents` with expectations in `../tests/expected` if present (format in the script's docstring). Per run it reports valid JSON, verified vs dropped quotes, Azerbaijani output, scores, expected quotes found, and classification / category / P / I matches. For `en_02_injection` it also checks: same findings as `en_01_core_migration`, no score-1 risks, and no system-prompt text in the output. On a CPU-only laptop expect 1–3 minutes per analysis.
 
 ### Tests
 ```bash
@@ -50,9 +50,10 @@ tests/
 | Validate AI output | `services/extractor.py`: Pydantic validation, one retry with the error, then `502 invalid_model_output`. |
 | Score = P × I by backend | `services/scorer.py`. Any score the model sends is ignored. Issues get P = 5 (already happened). |
 | Numbers from queries | `services/heatmap.py` |
-| Input is data | `ai/prompts.py`: document inside `<<<DOCUMENT … DOCUMENT>>>`, instructions inside it are to be ignored |
+| Input is data | `ai/prompts.py`: document (and dashboard facts) inside markers with a random code per request (`<<<DOCUMENT-<code> … DOCUMENT-<code>>>>`), so text inside cannot close the block. The text itself is never altered. |
 | Humans decide | New risks are always `pending`. |
-| Append-only audit | `services/audit_log.py` (SHA-256 chain) + SQLite triggers blocking UPDATE/DELETE; `GET /audit/verify` |
+| Append-only audit | `services/audit_log.py` (SHA-256 chain) + SQLite triggers blocking UPDATE/DELETE; `GET /audit/verify`. Writers are serialized so concurrent requests cannot fork the chain, and a unique index on `prev_hash` rejects any fork. |
+| No internal details to clients | `errors.py`: unexpected errors return `500 internal_error`; the server log has the error type and stack but not the message (it may contain document text). |
 | No secrets in git | `.env`, `*.db` in `.gitignore` |
 
 ## API notes for the frontend
@@ -72,3 +73,6 @@ tests/
 ## Known limits
 - The hash chain detects edited or removed entries, but not removal of the newest entries (truncation). Fix later by publishing the latest hash elsewhere.
 - AZ and RU sample texts need a check by a native speaker.
+- `X-Role` is a plain header: any client can claim any role. It drives the UI only and is **not** access control.
+- The full document text is stored in the database. Fine for local-only deployment.
+- The audit write lock works within one server process. Run a single uvicorn worker (the default); the unique index still blocks forks across processes, with a 500 error instead of a wait.

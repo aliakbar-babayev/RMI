@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     # "ollama" = local model via Ollama; "fake" = deterministic stand-in for dev/tests
     ai_provider: str = "ollama"
     ollama_url: str = "http://localhost:11434"
-    ollama_model: str = "qwen2.5:7b"
+    ollama_model: str = ""  # required when AI_PROVIDER=ollama; set in .env
     ollama_api_key: str | None = None  # sent as "Authorization: Bearer <key>" when set
     ai_timeout_seconds: float = 300.0
 

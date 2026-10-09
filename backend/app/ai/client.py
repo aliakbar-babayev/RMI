@@ -24,6 +24,8 @@ def call_model(system_prompt: str, user_text: str, schema: type[BaseModel] = AIE
     if settings.ai_provider == "fake":
         return fake_model.reply(user_text)
 
+    if not settings.ollama_model:
+        raise ModelUnavailableError("OLLAMA_MODEL is not set in .env")
     headers = {"Authorization": f"Bearer {settings.ollama_api_key}"} if settings.ollama_api_key else {}
     try:
         resp = httpx.post(

@@ -9,6 +9,7 @@ from app.config import settings
 def ollama(monkeypatch):
     monkeypatch.setattr(settings, "ai_provider", "ollama")
     monkeypatch.setattr(settings, "ollama_url", "https://llm.example.com/")
+    monkeypatch.setattr(settings, "ollama_model", "gemma4:e4b")
     sent = {}
 
     def fake_post(url, json, headers, timeout):
@@ -32,6 +33,17 @@ def test_no_auth_header_without_key(ollama, monkeypatch):
     monkeypatch.setattr(settings, "ollama_api_key", None)
     client.call_model("sys", "user")
     assert ollama["headers"] == {}
+
+
+def test_model_name_comes_from_settings(ollama):
+    client.call_model("sys", "user")
+    assert ollama["json"]["model"] == "gemma4:e4b"
+
+
+def test_missing_model_is_a_clear_error(ollama, monkeypatch):
+    monkeypatch.setattr(settings, "ollama_model", "")
+    with pytest.raises(client.ModelUnavailableError, match="OLLAMA_MODEL"):
+        client.call_model("sys", "user")
 
 
 def test_rejected_key_is_a_clear_error(ollama, monkeypatch):
