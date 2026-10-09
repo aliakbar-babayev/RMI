@@ -2,6 +2,7 @@ import { ArrowRight, BadgeCheck, HardHat, Network, Sparkles, UserCog } from 'luc
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { BrandLogo } from '../components/BrandLogo'
 import { ThemeSwitch } from '../components/ThemeSwitch'
 import { Caption, Chip, cx, inputCls } from '../components/ui'
 import type { Role } from '../lib/api'
@@ -83,8 +84,7 @@ export function Login() {
         <div aria-hidden className="pointer-events-none absolute inset-0 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:44px_44px]" />
 
         <div className="relative flex items-center gap-2.5">
-          <img src="/favicon.svg" alt="" width={36} height={36} className="h-9 w-9 rounded-md" />
-          <span className="text-lg font-semibold tracking-tight text-[#fff]">RMAI</span>
+          <BrandLogo onDark className="h-10 w-auto" />
         </div>
 
         <div className="relative mx-auto my-auto w-full max-w-lg py-10">
@@ -108,8 +108,7 @@ export function Login() {
       <main className="flex flex-col px-5 py-6 sm:px-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 lg:invisible">
-            <img src="/favicon.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-md" />
-            <span className="text-base font-semibold">RMAI</span>
+            <BrandLogo className="h-8 w-auto" />
           </div>
           <ThemeSwitch />
         </div>

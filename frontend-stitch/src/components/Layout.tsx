@@ -3,6 +3,7 @@ import { Navigate, NavLink, Outlet, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { usePoll, useApp } from '../lib/app'
 import { ROLE } from '../lib/labels'
+import { BrandLogo } from './BrandLogo'
 import { RiskInspector } from './RiskInspector'
 import { ThemeSwitch } from './ThemeSwitch'
 import { cx } from './ui'
@@ -18,11 +19,8 @@ const NAV = [
 
 function Logo() {
   return (
-    <div className="flex shrink-0 items-center gap-2.5">
-      <img src="/favicon.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-md" />
-      <div className="leading-tight">
-        <p className="text-base font-semibold tracking-tight text-ink">RMAI</p>
-      </div>
+    <div className="flex shrink-0 items-center">
+      <BrandLogo className="h-8 w-auto" />
     </div>
   )
 }

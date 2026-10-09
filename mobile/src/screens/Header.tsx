@@ -15,7 +15,7 @@ export function Header({ count, title, right }: { count?: number; title?: string
       </Pressable>
       {title ? (
         <View style={s.brand}>
-          <Image source={require('../../assets/rmai-mark.png')} style={s.mark} accessibilityLabel="RMAI" />
+          <Image source={require('../../assets/rmi-mark.png')} style={s.mark} accessibilityLabel="RMI" />
           <Text style={s.title} numberOfLines={1}>{title}</Text>
         </View>
       ) : <Text style={s.role}>{role}</Text>}

@@ -137,3 +137,8 @@ mark.evidence {
 @media (prefers-reduced-motion: reduce) {
   .login-waves { animation: none; }
 }
+
+/* Logo: show the file that matches the theme (see components/BrandLogo.tsx). */
+.brand-on-dark { display: none; }
+:root[data-theme="dark"] .brand-on-light { display: none; }
+:root[data-theme="dark"] .brand-on-dark { display: block; }
