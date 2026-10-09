@@ -49,6 +49,8 @@ def _call_ollama(system_prompt: str, user_text: str, schema: type[BaseModel]) ->
             headers=headers,
             timeout=settings.ai_timeout_seconds,
         )
+        if resp.status_code in (401, 403):
+            raise ModelUnavailableError("the model server rejected the API key")
         resp.raise_for_status()
         return resp.json()["message"]["content"]
     except (httpx.HTTPError, KeyError, ValueError) as exc:

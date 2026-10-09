@@ -1,0 +1,22 @@
+# Caddy: public HTTPS for the RMI backend. The certificate is obtained automatically.
+# Installed by setup.sh to /etc/caddy/Caddyfile (__DOMAIN__ is replaced there).
+__DOMAIN__ {
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Only the API is served. Nothing from disk (.env, the database) is reachable.
+	reverse_proxy 127.0.0.1:8000 {
+		# An analysis can take 40–90 s; allow up to 5 minutes.
+		transport http {
+			read_timeout 300s
+			write_timeout 300s
+		}
+	}
+}

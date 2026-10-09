@@ -346,7 +346,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: { 'Content-Type': 'application/json', 'X-Role': currentRole, ...init.headers },
     })
   } catch {
-    throw new ApiError(0, 'network_error', 'Cannot reach the backend. Is it running on port 8000?')
+    throw new ApiError(0, 'network_error', `Cannot reach the backend at ${BASE}. Check that it is running and that VITE_API_URL points to it.`)
   }
   const body = await res.json().catch(() => null)
   if (!res.ok) {

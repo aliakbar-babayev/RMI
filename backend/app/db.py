@@ -13,6 +13,8 @@ class Base(DeclarativeBase):
 engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {},
+    # Serverless Postgres closes idle connections; check each one before use.
+    pool_pre_ping=not settings.database_url.startswith("sqlite"),
 )
 
 
@@ -34,6 +36,16 @@ _APPEND_ONLY_TRIGGERS = [
        BEGIN SELECT RAISE(ABORT, 'audit_events is append-only'); END""",
     # create_all() does not add indexes to tables that already exist (databases made before it).
     "CREATE UNIQUE INDEX IF NOT EXISTS ix_audit_events_prev_hash ON audit_events (prev_hash)",
+]
+
+
+# Same append-only rule for Postgres (used on hosts without a persistent disk, e.g. Vercel + Neon).
+_PG_APPEND_ONLY = [
+    """CREATE OR REPLACE FUNCTION audit_events_append_only() RETURNS trigger AS $$
+       BEGIN RAISE EXCEPTION 'audit_events is append-only'; END; $$ LANGUAGE plpgsql""",
+    "DROP TRIGGER IF EXISTS audit_no_change ON audit_events",
+    """CREATE TRIGGER audit_no_change BEFORE UPDATE OR DELETE ON audit_events
+       FOR EACH ROW EXECUTE FUNCTION audit_events_append_only()""",
 ]
 
 
@@ -65,6 +77,10 @@ def init_db() -> None:
         with engine.begin() as conn:
             _add_missing_columns(conn)
             for stmt in _APPEND_ONLY_TRIGGERS:
+                conn.execute(text(stmt))
+    elif engine.dialect.name == "postgresql":
+        with engine.begin() as conn:
+            for stmt in _PG_APPEND_ONLY:
                 conn.execute(text(stmt))
     seed_systems()
 
