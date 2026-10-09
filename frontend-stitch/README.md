@@ -1,4 +1,6 @@
-# RM AI – Frontend (Phase 1)
+# RM AI – Frontend (Stitch design, all modules)
+
+This is `frontend-stitch/`, the full-module UI built from the Stitch "RMAI" screens. `frontend/` is the Phase 1 UI. Both talk to the same backend; the team picks one later.
 
 React + TypeScript (Vite), Tailwind CSS, Recharts. Talks only to the backend API in `../backend`.
 
