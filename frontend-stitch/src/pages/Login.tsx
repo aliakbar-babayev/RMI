@@ -101,7 +101,7 @@ export function Login() {
             <Feature icon={<BadgeCheck size={16} />} title="Tamper-evident audit chain">Each decision is a SHA-256-linked block that anyone can re-verify.</Feature>
           </ul>
         </div>
-        <p className="relative font-mono text-[11px] text-[#64748b]">RMAI · Neurobridge / OMNI AI Summit</p>
+        <p className="relative font-mono text-[11px] text-[#64748b]">RMI · Neurobridge / OMNI AI Summit</p>
       </aside>
 
       {/* Sign-in */}
@@ -115,7 +115,7 @@ export function Login() {
 
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
           <Chip tone="ai" className="self-start">Demo access</Chip>
-          <h2 className="mt-3 text-[28px] leading-9 font-semibold tracking-[-0.02em]">Sign in to RMAI</h2>
+          <h2 className="mt-3 text-[28px] leading-9 font-semibold tracking-[-0.02em]">Sign in to RMI</h2>
           <p className="mt-1 text-sm text-ink-2">Choose how you want to use the app. Your name is shown on the incidents you report.</p>
 
           <label className="mt-7 block">
