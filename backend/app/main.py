@@ -7,8 +7,8 @@ from app.ai.client import model_name
 from app.config import settings
 from app.db import init_db
 from app.errors import install_handlers
-from app.routers import analyze, audit, dashboard, risks
-from app.samples import SAMPLES
+from app.routers import analyze, audit, dashboard, escalations, incidents, risks, systems
+from app.samples import INCIDENT_SAMPLES, SAMPLES
 
 
 @asynccontextmanager
@@ -26,13 +26,18 @@ app.add_middleware(
 )
 install_handlers(app)
 
-for r in (analyze.router, risks.router, dashboard.router, audit.router):
+for r in (analyze.router, risks.router, dashboard.router, audit.router, incidents.router, escalations.router, systems.router):
     app.include_router(r)
 
 
 @app.get("/samples", tags=["samples"])
 def list_samples():
     return SAMPLES
+
+
+@app.get("/samples/incidents", tags=["samples"])
+def list_incident_samples():
+    return INCIDENT_SAMPLES
 
 
 @app.get("/health", tags=["meta"])

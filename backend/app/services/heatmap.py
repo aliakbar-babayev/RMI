@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.schemas import OPEN_STATUSES, Status
-from app.models.tables import Risk
+from app.models.tables import Analysis, Escalation, Incident, Risk
 
 UNASSIGNED = "unassigned"
 
@@ -21,6 +21,31 @@ def kpis(db: Session) -> dict:
         "resolved": by_status.get(Status.resolved, 0),
         "rejected": by_status.get(Status.rejected, 0),
         "total": sum(by_status.values()),
+        "materialized": db.scalar(select(func.count()).where(Risk.materialized_by.is_not(None))),
+        **_operations(db),
+    }
+
+
+def _operations(db: Session) -> dict:
+    """Incident and escalation counts, plus how many AI quotes survived verification."""
+    open_incidents = db.scalar(select(func.count()).where(Incident.status != "closed"))
+    open_sev12 = db.scalar(select(func.count()).where(Incident.status != "closed", Incident.severity.in_(("SEV1", "SEV2"))))
+    pending_esc = db.scalar(select(func.count()).where(Escalation.status == "pending"))
+    active_grants = db.scalar(select(func.count()).where(Escalation.status == "approved"))
+    verified = dropped = 0
+    for stats in db.scalars(select(Analysis.stats)):
+        dropped += (stats or {}).get("dropped_quotes", 0)
+    for evidence in db.scalars(select(Risk.evidence)):
+        verified += len(evidence or [])
+    total_quotes = verified + dropped
+    return {
+        "open_incidents": open_incidents,
+        "open_sev1_sev2": open_sev12,
+        "pending_escalations": pending_esc,
+        "active_grants": active_grants,
+        "quotes_verified": verified,
+        "quotes_dropped": dropped,
+        "quote_verification_rate": round(verified / total_quotes, 4) if total_quotes else None,
     }
 
 

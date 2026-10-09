@@ -1,4 +1,4 @@
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from app.ai.client import call_model
 from app.ai.prompts import SYSTEM_PROMPT, build_retry_message, build_user_message
@@ -17,19 +17,22 @@ def _strip_fences(raw: str) -> str:
     return raw.strip()
 
 
-def extract_risks(text: str, language_hint: str | None) -> tuple[AIExtraction, int]:
-    """Ask the model for risks and validate the reply. Returns (result, attempts used).
+def ask_model[T: BaseModel](system_prompt: str, user_msg: str, schema: type[T]) -> tuple[T, int]:
+    """Ask the model and validate the reply against `schema`. Returns (result, attempts used).
 
     Retries once with the validation error; raw model text never leaves this function.
     """
-    user_msg = build_user_message(text, language_hint)
     prompt = user_msg
     last_error = ""
     for attempt in (1, 2):
-        raw = call_model(SYSTEM_PROMPT, prompt)
+        raw = call_model(system_prompt, prompt, schema)
         try:
-            return AIExtraction.model_validate_json(_strip_fences(raw)), attempt
+            return schema.model_validate_json(_strip_fences(raw)), attempt
         except ValidationError as exc:
             last_error = str(exc)
             prompt = build_retry_message(user_msg, last_error)
     raise ExtractionError(last_error)
+
+
+def extract_risks(text: str, language_hint: str | None) -> tuple[AIExtraction, int]:
+    return ask_model(SYSTEM_PROMPT, build_user_message(text, language_hint), AIExtraction)

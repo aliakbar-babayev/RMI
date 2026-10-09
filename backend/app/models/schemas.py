@@ -105,6 +105,8 @@ class AnalysisCreate(BaseModel):
     text: str
     language_hint: str | None = Field(default=None, max_length=10)
     source: str | None = Field(default=None, max_length=200)
+    # Also run the 12-dimension pre-project readiness review (a second model call).
+    readiness: bool = False
 
 
 class Evidence(BaseModel):
@@ -138,6 +140,8 @@ class RiskOut(BaseModel):
     owner_role: str
     status: Status
     escalated_to: str | None
+    materialized_by: str | None = None
+    incident_id: str | None = None
     created_at: str
     updated_at: str
 
@@ -150,6 +154,8 @@ class AnalysisOut(BaseModel):
     model: str
     stats: dict
     created_at: str
+    readiness: dict | None = None
+    incident_id: str | None = None
     risks: list[RiskOut]
 
 
@@ -202,3 +208,157 @@ class VerifyOut(BaseModel):
     ok: bool
     checked: int
     broken_at: int | None = None
+    duration_ms: float | None = None
+
+
+# ---------- Module 1: pre-project readiness review ----------
+
+READINESS_DIMENSIONS = [
+    "scope", "success_criteria", "schedule", "budget", "resourcing", "vendors",
+    "dependencies", "testing", "rollback", "security_access", "compliance", "stakeholders",
+]
+
+
+class DimensionStatus(StrEnum):
+    passed = "passed"
+    warning = "warning"
+    failed = "failed"
+
+
+class AIDimension(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    key: str
+    status: DimensionStatus
+    finding: str = ""
+    recommendation: str = ""
+    quote: str | None = None
+
+    _norm = field_validator("key", "status", mode="before")(_lower)
+
+
+class AIReadiness(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    summary: str = ""
+    dimensions: list[AIDimension]
+
+
+# ---------- Module 2: incident assessment ----------
+
+
+class Severity(StrEnum):
+    sev1 = "SEV1"
+    sev2 = "SEV2"
+    sev3 = "SEV3"
+    sev4 = "SEV4"
+
+
+class TimeToImpact(StrEnum):
+    immediate = "immediate"
+    hours = "hours"
+    days = "days"
+    none = "none"
+    unknown = "unknown"
+
+
+class AIAction(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    action: str = Field(min_length=1)
+    owner_role: str = ""
+
+
+class AIResponsePlan(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    immediate: list[AIAction] = Field(default_factory=list)
+    recovery: list[AIAction] = Field(default_factory=list)
+    prevention: list[AIAction] = Field(default_factory=list)
+
+
+class AIEscalation(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    resource: str
+    access_level: str
+    duration_minutes: int = Field(ge=5, le=1440)
+    reason: str = ""
+
+
+class AIIncident(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    title: str = Field(min_length=1)
+    summary: str = ""
+    severity: Severity
+    severity_reason: str = ""
+    environment: str | None = None
+    systems: list[str] = Field(default_factory=list)
+    time_to_impact: TimeToImpact = TimeToImpact.unknown
+    consequential_risks: list[AIRisk] = Field(default_factory=list)
+    response: AIResponsePlan = Field(default_factory=AIResponsePlan)
+    escalation: AIEscalation | None = None
+
+    @field_validator("severity", mode="before")
+    @classmethod
+    def _sev(cls, v: Any) -> Any:
+        return v.strip().upper() if isinstance(v, str) else v
+
+    _norm = field_validator("time_to_impact", mode="before")(_lower)
+
+
+class IncidentStatus(StrEnum):
+    reported = "reported"
+    acknowledged = "acknowledged"
+    contained = "contained"
+    recovered = "recovered"
+    closed = "closed"
+
+
+class IncidentCreate(BaseModel):
+    report: str
+    environment: str | None = Field(default=None, max_length=20)
+    systems: list[str] = Field(default_factory=list, max_length=20)
+    occurred_at: str | None = None
+    anonymous: bool = False
+    language_hint: str | None = Field(default=None, max_length=10)
+
+
+class SeverityChange(BaseModel):
+    severity: Severity
+    reason: str = Field(min_length=1)
+
+    @field_validator("severity", mode="before")
+    @classmethod
+    def _sev(cls, v: Any) -> Any:
+        return v.strip().upper() if isinstance(v, str) else v
+
+
+class EscalationType(StrEnum):
+    privilege = "privilege"
+    decision = "decision"
+    budget = "budget"
+    risk_acceptance = "risk_acceptance"
+    cross_team = "cross_team"
+    vendor = "vendor"
+
+
+class EscalationCreate(BaseModel):
+    type: EscalationType = EscalationType.privilege
+    incident_id: str | None = None
+    risk_id: str | None = None
+    action_needed: str = Field(min_length=1)
+    resource: str = Field(min_length=1, max_length=200)
+    access_level: str = Field(min_length=1, max_length=100)
+    duration_minutes: int = Field(ge=5, le=1440)
+    justification: str = Field(min_length=1)
+
+
+class BreakGlassCreate(BaseModel):
+    incident_id: str
+    resource: str = Field(min_length=1, max_length=200)
+    access_level: str = Field(min_length=1, max_length=100)
+    justification: str = Field(min_length=1)
+
+
+class EscalationDecision(BaseModel):
+    result: str = Field(pattern="^(approve|reject)$")
+    comment: str | None = None
+    # Approve with a narrower scope than requested.
+    access_level: str | None = Field(default=None, max_length=100)
+    duration_minutes: int | None = Field(default=None, ge=5, le=1440)

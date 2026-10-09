@@ -33,7 +33,7 @@ def model(monkeypatch):
     """Replace the model with a queue of canned replies."""
     replies: list = []
 
-    def fake_call(system_prompt, user_text):
+    def fake_call(system_prompt, user_text, schema=None):
         reply = replies.pop(0)
         if isinstance(reply, Exception):
             raise reply

@@ -17,10 +17,14 @@ _ALLOWED_FROM: dict[str, set[Status]] = {
 }
 
 
+_DERIVED = {"analysis_id", "incident_id"}
+
+
 def to_out(risk: Risk) -> RiskOut:
     return RiskOut.model_validate(
-        {**{c: getattr(risk, c) for c in RiskOut.model_fields if c != "analysis_id"},
-         "analysis_id": risk.analysis.analysis_id}
+        {**{c: getattr(risk, c) for c in RiskOut.model_fields if c not in _DERIVED},
+         "analysis_id": risk.analysis.analysis_id,
+         "incident_id": risk.analysis.incident_id}
     )
 
 

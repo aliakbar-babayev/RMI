@@ -47,7 +47,7 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
-def _compute_hash(
+def canonical_payload(
     *,
     entity_type: str,
     entity_id: str,
@@ -58,7 +58,8 @@ def _compute_hash(
     recorded_at: str,
     prev_hash: str,
 ) -> str:
-    payload = json.dumps(
+    """The exact bytes that are hashed: sorted keys, no spaces, UTF-8."""
+    return json.dumps(
         {
             "entity_type": entity_type,
             "entity_id": entity_id,
@@ -72,6 +73,23 @@ def _compute_hash(
         sort_keys=True,
         ensure_ascii=False,
         separators=(",", ":"),
+    )
+
+
+def _compute_hash(
+    *,
+    entity_type: str,
+    entity_id: str,
+    event_type: str,
+    actor_type: str,
+    actor_role: str | None,
+    data: dict,
+    recorded_at: str,
+    prev_hash: str,
+) -> str:
+    payload = canonical_payload(
+        entity_type=entity_type, entity_id=entity_id, event_type=event_type, actor_type=actor_type,
+        actor_role=actor_role, data=data, recorded_at=recorded_at, prev_hash=prev_hash,
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -137,3 +155,33 @@ def verify_chain(db: Session) -> tuple[bool, int, int | None]:
             return False, checked, ev.event_id
         prev_hash = ev.hash
     return True, checked, None
+
+
+def proof(db: Session, event_id: int) -> dict | None:
+    """Recompute one entry's hash from its stored fields and check its link to the previous entry."""
+    ev = db.get(AuditEvent, event_id)
+    if ev is None:
+        return None
+    prev = db.scalar(
+        select(AuditEvent).where(AuditEvent.event_id < event_id).order_by(AuditEvent.event_id.desc()).limit(1)
+    )
+    fields = dict(
+        entity_type=ev.entity_type, entity_id=ev.entity_id, event_type=ev.event_type, actor_type=ev.actor_type,
+        actor_role=ev.actor_role, data=ev.data, recorded_at=ev.recorded_at, prev_hash=ev.prev_hash,
+    )
+    payload = canonical_payload(**fields)
+    recomputed = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    expected_prev = prev.hash if prev else GENESIS_HASH
+    return {
+        "event_id": ev.event_id,
+        "components": fields,
+        "canonical_payload": payload,
+        "payload_bytes": len(payload.encode("utf-8")),
+        "stored_hash": ev.hash,
+        "recomputed_hash": recomputed,
+        "hash_matches": recomputed == ev.hash,
+        "previous_event_id": prev.event_id if prev else None,
+        "expected_prev_hash": expected_prev,
+        "prev_link_ok": ev.prev_hash == expected_prev,
+        "algorithm": "SHA-256 over canonical JSON (sorted keys, no spaces, UTF-8)",
+    }
